@@ -16,7 +16,7 @@ public class RAECostComputer {
 	FloatMatrix FreqOrig;
 	DifferentiableMatrixFunction f;
 	
-	double[] Gradient;
+	double[] CalcGrad, Gradient;
 	double cost;
 	Structure[] AllKids;
 	
@@ -38,22 +38,17 @@ public class RAECostComputer {
 	/**
 	 * This method is called by RAECost after building the Kids data
 	 * It is equivalent to calling computeCostAndGradRAE(allKids, theta2, 1 ....
-	 * @param AllKids
-	 * @param theta
-	 * @param AlphaCat
-	 * @param CatSize
-	 * @param WeOrig
-	 * @return
-	 * @throws Exception
 	 */
 	public double Compute(FineTunableTheta Theta, double[] Lambda) throws Exception
 	{
 		setLambdas(Lambda);
-		Propagator = new RAEPropagation(Theta,AlphaCat,Beta,HiddenSize,DictionaryLength,f);
+		
 		cost = 0;
 		num_nodes = 0;
-		
 		int CurrentDataIndex = 0;
+		CalcGrad = new double[ Theta.Theta.length ];
+		Propagator = new RAEPropagation(Theta,AlphaCat,Beta,HiddenSize,DictionaryLength,f);
+		
 		for(LabeledDatum<Integer,Integer> Data : DataCell)
 		{
 			int[] WordIndices = ArraysHelper.getIntArray( Data.getFeatures() );
@@ -68,11 +63,15 @@ public class RAECostComputer {
 			
 			Tree tree = Propagator.ForwardPropagate(Theta, WordsEmbedded, FreqOrig, 
 									CurrentLabel, SentenceLength, AllKids[CurrentDataIndex]);
+			
+			double[] Gradient = Propagator.BackPropagate(tree, Theta, WordIndices).Theta;
+			
 			cost += tree.TotalScore; 
-            num_nodes++;			
-            
-			Propagator.BackPropagate(tree, Theta, WordIndices);
-			CurrentDataIndex++;
+            num_nodes += SentenceLength;
+            DoubleArrays.addi(CalcGrad, Gradient);
+			
+            CurrentDataIndex++;
+			
 		}
 		
 		CalculateFineCosts(Theta);
@@ -82,20 +81,16 @@ public class RAECostComputer {
 	/**
 	 * This method is called first by RAECost to build the Kids data
 	 * It is equivalent to calling computeCostAndGradRAE([], theta1, 0 ....
-	 * @param theta
-	 * @param AlphaCat
-	 * @param CatSize
-	 * @param WeOrig
-	 * @return
-	 * @throws Exception
 	 */
 	public double Compute(Theta Theta, double[] Lambda, DoubleMatrix WeOrig) throws Exception
 	{
 		setLambdas(Lambda);
-		Propagator = new RAEPropagation(Theta,AlphaCat,Beta,HiddenSize,DictionaryLength,f);
 		cost = 0;
 		num_nodes = 0;
 		int CurrentDataIndex = 0;
+		CalcGrad = new double[ Theta.Theta.length ];
+		Propagator = new RAEPropagation(Theta,AlphaCat,Beta,HiddenSize,DictionaryLength,f);
+		
 		for(LabeledDatum<Integer,Integer> Data : DataCell)
 		{
 			int[] WordIndices = ArraysHelper.getIntArray( Data.getFeatures() );
@@ -111,11 +106,14 @@ public class RAECostComputer {
 			
 			Tree tree = Propagator.ForwardPropagate(Theta, WordsEmbedded, FreqOrig, CurrentLabel, SentenceLength);
 			AllKids[ CurrentDataIndex ] = tree.structure;
+			
+			double[] Gradient = Propagator.BackPropagate(tree, Theta, WordIndices).Theta;
+			
 			cost += tree.TotalScore; 
             num_nodes += SentenceLength;
-            
-			Propagator.BackPropagate(tree, Theta, WordIndices);
-			CurrentDataIndex++;
+            DoubleArrays.addi(CalcGrad, Gradient);
+			
+            CurrentDataIndex++;
 		}
 		num_nodes -= NumExamples;
 		CalculateCosts(Theta);
@@ -149,9 +147,6 @@ public class RAECostComputer {
 		double[] WeightedGrad = (new Theta(Theta.W1.mul(LambdaW),Theta.W2.mul(LambdaW),Theta.W3.mul(LambdaW),
 		Theta.W4.mul(LambdaW),Theta.We.mul(LambdaL),b0,b0,b0)).Theta; 
 		
-		double[] CalcGrad = (new Theta(Propagator.GW1,Propagator.GW2,Propagator.GW3,Propagator.GW4,
-		Propagator.GWe_total,Propagator.Gb1,Propagator.Gb2,Propagator.Gb3)).Theta;
-		
 		DoubleArrays.scale(CalcGrad, (1.0f/num_nodes));
 		Gradient = DoubleArrays.add(CalcGrad, WeightedGrad);		
 	}
@@ -170,9 +165,6 @@ public class RAECostComputer {
 		DoubleMatrix b0 = DoubleMatrix.zeros(HiddenSize,1);
 		double[] WeightedGrad = (new FineTunableTheta(Theta.W1.mul(LambdaW),Theta.W2.mul(LambdaW),Theta.W3.mul(LambdaW),
 		Theta.W4.mul(LambdaW),Theta.Wcat.mul(LambdaCat),Theta.We.mul(LambdaL),b0,b0,b0,bcat0)).Theta; 
-		
-		double[] CalcGrad = (new FineTunableTheta(Propagator.GW1,Propagator.GW2,Propagator.GW3,Propagator.GW4,
-		Propagator.GWCat,Propagator.GWe_total,Propagator.Gb1,Propagator.Gb2,Propagator.Gb3,Propagator.Gbcat)).Theta;
 		
 		DoubleArrays.scale(CalcGrad, (1.0f/num_nodes));
 		Gradient = DoubleArrays.add(CalcGrad, WeightedGrad);		

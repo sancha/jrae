@@ -1,6 +1,7 @@
 package rae;
 
 import org.jblas.*;
+
 import java.io.*;
 
 public class FineTunableTheta extends Theta{
@@ -9,22 +10,32 @@ public class FineTunableTheta extends Theta{
 	int CatSize;
 	private static final long serialVersionUID = 752647956355547L;
 	
-	/**
-	 * @param iTheta
-	 * @param hiddenSize
-	 * @param visibleSize
-	 * @param catSize
-	 * @param dictionaryLength
-	 */
 	public FineTunableTheta(double[] iTheta, int hiddenSize, int visibleSize, int CatSize, int dictionaryLength)
 	{
-		super(iTheta, hiddenSize, visibleSize, dictionaryLength);
+		super();
+		this.hiddenSize = hiddenSize;
+		this.visibleSize = visibleSize;
+		this.dictionaryLength = dictionaryLength;
 		this.CatSize = CatSize;
 		fixIndices();
-		
 		DoubleMatrix Full = new DoubleMatrix(iTheta);
+		
+		W1 = Full.getRowRange(Wbegins[0], Wends[0]+1, 0).reshape(hiddenSize, visibleSize);
+		W2 = Full.getRowRange(Wbegins[1], Wends[1]+1, 0).reshape(hiddenSize, visibleSize);
+		W3 = Full.getRowRange(Wbegins[2], Wends[2]+1, 0).reshape(visibleSize, hiddenSize);
+		W4 = Full.getRowRange(Wbegins[3], Wends[3]+1, 0).reshape(visibleSize, hiddenSize);
+		We = Full.getRowRange(Wbegins[4], Wends[4]+1, 0).reshape(hiddenSize, dictionaryLength);
+		
+		b1 = Full.getRowRange(bbegins[0], bends[0]+1, 0).reshape(hiddenSize, 1);
+		b2 = Full.getRowRange(bbegins[1], bends[1]+1, 0).reshape(visibleSize, 1);
+		b3 = Full.getRowRange(bbegins[2], bends[2]+1, 0).reshape(visibleSize, 1);		
+		
+		
 		Wcat = Full.getRowRange(Wbegins[5], Wends[5]+1, 0).reshape(CatSize, hiddenSize);
 		bcat = Full.getRowRange(bbegins[5], bends[5]+1, 0).reshape(CatSize, 1);
+		
+		Theta = new double[ getThetaSize() ];
+		flatten(Theta);
 	}
 	
 	public FineTunableTheta(FineTunableTheta orig)
@@ -35,37 +46,21 @@ public class FineTunableTheta extends Theta{
 		bcat = orig.bcat.dup();
 	}
 	
-	/**
-	 * @param hiddenSize
-	 * @param visibleSize
-	 * @param catSize
-	 * @param dictionaryLength
-	 */
-	public FineTunableTheta(int hiddenSize, int visibleSize, int catSize, int dictionaryLength)
+	public FineTunableTheta(int hiddenSize, int visibleSize, int catSize, int dictionaryLength, boolean random)
 	{
 		super(hiddenSize,visibleSize,catSize,dictionaryLength);
 
-		// Initialize the matrices to small random values and then
-		// convert weights and bias matrices to the vector form.
-		// This step will "unroll" (flatten and concatenate together) all
-		// your parameters into a vector, which can then be used with minFunc.
 		this.CatSize = catSize;
-		InitializeMatrices();
+		if(random)
+			InitializeMatrices();
+		else
+			InitializeMatricesToZeros();
 		Theta = new double[ this.getThetaSize() ];
 		flatten(Theta);		
-		
 	}
 	
 	/**
 	 * Set the Ws and bs and populate theta
-	 * @param W1
-	 * @param W2
-	 * @param W3
-	 * @param W4
-	 * @param We
-	 * @param b1
-	 * @param b2
-	 * @param b3
 	 */
 	public FineTunableTheta(DoubleMatrix W1, DoubleMatrix W2, 
 					DoubleMatrix W3, DoubleMatrix W4, DoubleMatrix Wcat,
@@ -111,6 +106,13 @@ public class FineTunableTheta extends Theta{
 	{
 		super.InitializeMatrices();
 		Wcat = (DoubleMatrix.rand(CatSize, hiddenSize).muli(2*r1)).subi(r1);
+		bcat = DoubleMatrix.zeros(CatSize, 1);
+	}
+	
+	protected void InitializeMatricesToZeros()
+	{
+		super.InitializeMatricesToZeros();
+		Wcat = DoubleMatrix.zeros(CatSize, hiddenSize);
 		bcat = DoubleMatrix.zeros(CatSize, 1);
 	}
 	

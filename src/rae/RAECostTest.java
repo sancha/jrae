@@ -28,7 +28,7 @@ public class RAECostTest {
 		
 		RAECost cost = new RAECost(alphaCat, 1, beta, DictionarySize, hiddenSize, hiddenSize, 
 				lambda, DoubleMatrix.zeros(hiddenSize, DictionarySize), dataset, null, f);
-	
+		System.out.println( cost.dimension() );
 		assertTrue( GradientChecker.check(cost));
 		
 	}

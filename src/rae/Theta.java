@@ -13,17 +13,14 @@ import org.jblas.*;
  *  Check the DoubleMatrix api, there may be options to unroll the matrices into vectors also.
  */
 public class Theta implements Serializable{
+	
 	DoubleMatrix W1, W2, W3, W4, We;
 	DoubleMatrix b1, b2, b3;
+	
 	double[] Theta;
 	
 	protected double r1, r2;
-	/**
-	 * Concatenate it however you want, but populate the following while construction
-	 * entries such that 0 -> W1, b1, 1->W2, b2, 2->W3,b3, 3->W4, b4(non existent so set it to -1)
-	 * 4-> Wcat, bcat(non existent in this class, so set it to -1)
-	 * 5-> We 
-	 */
+
 	int[] Wbegins, Wends, bbegins, bends;
 	
 	int hiddenSize, visibleSize, dictionaryLength;
@@ -51,12 +48,8 @@ public class Theta implements Serializable{
 	/**
 	 * Creates a bunch of DoubleMatrices and returns a flattened concat of 
 	 * all matrices as in /initializeParamters.m
-	 * @param hiddenSize 
-	 * @param visibleSize
-	 * @param catSize
-	 * @param dictionaryLength
 	 */
-	public Theta(int hiddenSize, int visibleSize, int dictionaryLength)
+	public Theta(int hiddenSize, int visibleSize, int dictionaryLength, boolean random)
 	{
 		this(hiddenSize, visibleSize, 1, dictionaryLength);
 		// Initialize the matrices to small random values and then
@@ -64,9 +57,12 @@ public class Theta implements Serializable{
 		// This step will "unroll" (flatten and concatenate together) all
 		// your parameters into a vector, which can then be used with minFunc.
 
-		InitializeMatrices();
+		if(random)
+			InitializeMatrices();
+		else
+			InitializeMatricesToZeros();
 		Theta = new double[ getThetaSize() ];
-		flatten(Theta);
+		flatten(Theta);		
 	}
 	
 	/**
@@ -102,7 +98,6 @@ public class Theta implements Serializable{
 	
 	/**
 	 * Reconstruct the Theta from theta vector and populate all the W matrices.
-	 * @param theta
 	 */
 	public Theta(double[] iTheta, int hiddenSize, int visibleSize, int dictionaryLength)
 	{
@@ -113,12 +108,6 @@ public class Theta implements Serializable{
 		this.fixIndices();
 		DoubleMatrix Full = new DoubleMatrix(iTheta);
 		
-//		System.out.println(Full.rows + " " + Full.columns);
-//		System.out.println(Wbegins[0] + " " + Wends[0]);
-//		System.out.println(hiddenSize + " " + visibleSize);
-//		DoubleMatrix t = Full.getRowRange(Wbegins[0], Wends[0], 0);
-//		System.out.println(t.rows + " " + t.columns);
-		
 		W1 = Full.getRowRange(Wbegins[0], Wends[0]+1, 0).reshape(hiddenSize, visibleSize);
 		W2 = Full.getRowRange(Wbegins[1], Wends[1]+1, 0).reshape(hiddenSize, visibleSize);
 		W3 = Full.getRowRange(Wbegins[2], Wends[2]+1, 0).reshape(visibleSize, hiddenSize);
@@ -128,8 +117,9 @@ public class Theta implements Serializable{
 		b1 = Full.getRowRange(bbegins[0], bends[0]+1, 0).reshape(hiddenSize, 1);
 		b2 = Full.getRowRange(bbegins[1], bends[1]+1, 0).reshape(visibleSize, 1);
 		b3 = Full.getRowRange(bbegins[2], bends[2]+1, 0).reshape(visibleSize, 1);		
-		
-		Theta = iTheta.clone();
+
+		Theta = new double[ getThetaSize() ];
+		flatten(Theta);
 	}
 	
 	/**
@@ -191,6 +181,25 @@ public class Theta implements Serializable{
 		
 		We = ((DoubleMatrix.rand(hiddenSize, dictionaryLength).muli(2*r1)).subi(r1)).muli(r2);
 	}
+
+	protected void InitializeMatricesToZeros()
+	{
+		Wbegins = new int[6];
+		Wends = new int[6];
+		bbegins = new int[6];
+		bends = new int[6];
+		
+		W1 = DoubleMatrix.zeros(hiddenSize, visibleSize);
+		W2 = DoubleMatrix.zeros(hiddenSize, visibleSize);
+		W3 = DoubleMatrix.zeros(visibleSize, hiddenSize);
+		W4 = DoubleMatrix.zeros(visibleSize, hiddenSize);
+		
+		b1 = DoubleMatrix.zeros(hiddenSize, 1);
+		b2 = DoubleMatrix.zeros(visibleSize, 1);
+		b3 = DoubleMatrix.zeros(visibleSize, 1);		
+		
+		We = DoubleMatrix.zeros(hiddenSize, dictionaryLength);
+	}
 	
 	protected void flatten(double[] Theta)
 	{
@@ -222,10 +231,5 @@ public class Theta implements Serializable{
 		bbegins[3] = -1;			bends[3] = -1;	//b4
 		bbegins[4] = -1;			bends[4] = -1;	//be
 		bbegins[5] = -1;			bends[5] = -1;	//bcat
-//		for(int i=0; i<6; i++)
-//			System.out.println(Wbegins[i] + " " + Wends[i]);
-//		
-//		for(int i=0; i<3; i++)
-//			System.out.println(bbegins[i] + " " + bends[i]);
 	}
 }

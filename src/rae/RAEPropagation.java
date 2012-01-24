@@ -1,18 +1,12 @@
 package rae;
 
 import math.*;
-
 import org.jblas.*;
-
 import util.*;
-
-import java.io.*;
 import java.util.*;
 
 public class RAEPropagation {
 	DifferentiableMatrixFunction f;
-	DoubleMatrix GW1, GW2, GW3, GW4, GWCat, GWe_total;
-	DoubleMatrix Gb1, Gb2, Gb3, Gbcat;
 	int HiddenSize, DictionaryLength, CatSize;
 	double AlphaCat, Beta;
 	Tree tree;
@@ -25,7 +19,6 @@ public class RAEPropagation {
 		this.HiddenSize = HiddenSize;
 		this.DictionaryLength = DictionaryLength;
 		this.f = f;
-		initializeGradients( );
 	}
 	
 	public RAEPropagation(double AlphaCat, double Beta, int HiddenSize, int CatSize,
@@ -37,7 +30,6 @@ public class RAEPropagation {
 		this.DictionaryLength = DictionaryLength;
 		this.f = f;
 		this.CatSize = CatSize;
-		initializeFineGradients( );		
 	}
 	
 	public RAEPropagation(Theta theta, double AlphaCat, double Beta, int HiddenSize, 
@@ -54,11 +46,6 @@ public class RAEPropagation {
 	
 	/**
 	 * Building the tree / kids and forward propagation
-	 * @param WordsEmbedded
-	 * @param Freq
-	 * @param CurrentLabel
-	 * @param SentenceLength
-	 * @return
 	 */
 	public Tree ForwardPropagate(Theta theta, DoubleMatrix WordsEmbedded, FloatMatrix Freq, 
 						int CurrentLabel, int SentenceLength)
@@ -229,8 +216,9 @@ public class RAEPropagation {
 		return tree;
 	}
 	
-	public void BackPropagate(Tree tree, Theta theta, int[] WordsIndexed)
+	public Theta BackPropagate(Tree tree, Theta theta, int[] WordsIndexed)
 	{
+		Theta Gradient = new Theta(HiddenSize, HiddenSize, DictionaryLength, false);
 		int SentenceLength = WordsIndexed.length;
 		if( tree.T.length != 2*SentenceLength - 1 )
 			System.err.println("Bad Tree for backpropagation!");
@@ -280,14 +268,14 @@ public class RAEPropagation {
                 CurrentNode.LeftChild.ParentDelta = CurrentDelta;
                 CurrentNode.RightChild.ParentDelta = CurrentDelta;
                 
-                GW1.addi( (CurrentDelta.mmul(CurrentNode.LeftChild.Features.transpose()) ));
-                GW2.addi( (CurrentDelta.mmul(CurrentNode.RightChild.Features.transpose()) ));
-                GW3.addi( ND1.mmul(A1Norm.transpose()));
-                GW4.addi( ND2.mmul(A1Norm.transpose()));                
+                Gradient.W1.addi( (CurrentDelta.mmul(CurrentNode.LeftChild.Features.transpose()) ));
+                Gradient.W2.addi( (CurrentDelta.mmul(CurrentNode.RightChild.Features.transpose()) ));
+                Gradient.W3.addi( ND1.mmul(A1Norm.transpose()));
+                Gradient.W4.addi( ND2.mmul(A1Norm.transpose()));                
         		
-	            Gb1.addi(CurrentDelta);
-	            Gb2.addi(ND1);
-	            Gb3.addi(ND2);
+                Gradient.b1.addi(CurrentDelta);
+                Gradient.b2.addi(ND1);
+                Gradient.b3.addi(ND2);
 			}
 			else
 			{
@@ -297,11 +285,16 @@ public class RAEPropagation {
 		}
 		
 		for(int l=0; l<SentenceLength; l++)
-			DoubleMatrixFunctions.IncrementColumn(GWe_total,WordsIndexed[l],GL.getColumn(l));
+			DoubleMatrixFunctions.IncrementColumn(Gradient.We,WordsIndexed[l],GL.getColumn(l));
+		
+		return (new Theta(Gradient.W1,Gradient.W2,Gradient.W3,
+				Gradient.W4,Gradient.We,Gradient.b1,Gradient.b2,Gradient.b3)); 
 	}
 	
-	public void BackPropagate(Tree tree, FineTunableTheta theta, int[] WordsIndexed)
+	public FineTunableTheta BackPropagate(Tree tree, FineTunableTheta theta, int[] WordsIndexed)
 	{
+		FineTunableTheta Gradient = new FineTunableTheta(HiddenSize, HiddenSize, CatSize, DictionaryLength, false);
+		
 		int SentenceLength = WordsIndexed.length;
 		if( tree.T.length != 2*SentenceLength - 1 )
 			System.err.println("Bad Tree for backpropagation!");
@@ -344,8 +337,8 @@ public class RAEPropagation {
                 DoubleMatrix ND1 = CurrentNode.DeltaOut1, ND2 = CurrentNode.DeltaOut2;
                 DoubleMatrix PD = CurrentNode.ParentDelta; 
 
-                Gbcat = Gbcat.addi( CurrentNode.catDelta );
-                GWCat = GWCat.addi( CurrentNode.catDelta.mmul(A1Norm.transpose()) );
+                Gradient.bcat = Gradient.bcat.addi( CurrentNode.catDelta );
+                Gradient.Wcat = Gradient.Wcat.addi( CurrentNode.catDelta.mmul(A1Norm.transpose()) );
                 
                 DoubleMatrix Activation = ((theta.W3.transpose()).mmul(ND1)).addi((theta.W4.transpose()).mmul(ND2));
                 Activation.addi( ((NodeW.transpose()).mmul(PD)).addi((theta.Wcat.transpose()).mmul(CurrentNode.catDelta)) );
@@ -355,19 +348,19 @@ public class RAEPropagation {
                 CurrentNode.LeftChild.ParentDelta = CurrentDelta;
                 CurrentNode.RightChild.ParentDelta = CurrentDelta;
                 
-                GW1.addi( (CurrentDelta.mmul(CurrentNode.LeftChild.Features.transpose()) ));
-                GW2.addi( (CurrentDelta.mmul(CurrentNode.RightChild.Features.transpose()) ));
-                GW3.addi( ND1.mmul(A1Norm.transpose()));
-                GW4.addi( ND2.mmul(A1Norm.transpose()));                
+                Gradient.W1.addi( (CurrentDelta.mmul(CurrentNode.LeftChild.Features.transpose()) ));
+                Gradient.W2.addi( (CurrentDelta.mmul(CurrentNode.RightChild.Features.transpose()) ));
+                Gradient.W3.addi( ND1.mmul(A1Norm.transpose()));
+                Gradient.W4.addi( ND2.mmul(A1Norm.transpose()));                
         		
-	            Gb1.addi(CurrentDelta);
-	            Gb2.addi(ND1);
-	            Gb3.addi(ND2);
+                Gradient.b1.addi(CurrentDelta);
+                Gradient.b2.addi(ND1);
+                Gradient.b3.addi(ND2);
 			}
 			else
 			{
-                GWCat = GWCat.addi( CurrentNode.catDelta.mmul( CurrentNode.Features.transpose() ) );
-                Gbcat = Gbcat.addi( CurrentNode.catDelta );
+				Gradient.Wcat = Gradient.Wcat.addi( CurrentNode.catDelta.mmul( CurrentNode.Features.transpose() ) );
+				Gradient.bcat = Gradient.bcat.addi( CurrentNode.catDelta );
 
 				DoubleMatrixFunctions.IncrementColumn(GL, CurrentNode.NodeName, 
 						(((NodeW.transpose()).mmul( CurrentNode.ParentDelta ))
@@ -377,39 +370,12 @@ public class RAEPropagation {
 		}
 		
 		for(int l=0; l<SentenceLength; l++)
-			DoubleMatrixFunctions.IncrementColumn(GWe_total,WordsIndexed[l],GL.getColumn(l));		
+			DoubleMatrixFunctions.IncrementColumn(Gradient.We,WordsIndexed[l],GL.getColumn(l));		
+	
+		return (new FineTunableTheta(Gradient.W1,Gradient.W2,Gradient.W3,
+				Gradient.W4,Gradient.Wcat,Gradient.We,Gradient.b1,Gradient.b2,Gradient.b3, Gradient.bcat));
 	}
 	
-	/**
-	 * Pre-allocating memory for the gradients
-	 * Line 18-28 in /ComputeCostAndGradRAE.m
-	 * @param Theta
-	 */
-	private void initializeGradients( )
-	{
-		GW1 = new DoubleMatrix(HiddenSize, HiddenSize);
-		GW2 = new DoubleMatrix(HiddenSize, HiddenSize);
-		GW3 = new DoubleMatrix(HiddenSize, HiddenSize);
-		GW4 = new DoubleMatrix(HiddenSize, HiddenSize);
-		GWe_total = new DoubleMatrix(HiddenSize, DictionaryLength);
-		
-		Gb1 = new DoubleMatrix(HiddenSize, 1);
-		Gb2 = new DoubleMatrix(HiddenSize, 1);
-		Gb3 = new DoubleMatrix(HiddenSize, 1);		
-	}
-	
-	/**
-	 * Pre-allocating memory for the gradients
-	 * Line 18-28 in /ComputeCostAndGradRAE.m
-	 * @param Theta
-	 */
-	private void initializeFineGradients( )
-	{
-		initializeGradients( );	
-		GWCat = new DoubleMatrix(CatSize, HiddenSize);
-		Gbcat = new DoubleMatrix(CatSize, 1);		
-	} 
-
 	private DoubleMatrix UpdateEmbedding(DoubleMatrix CurrentEmbedding, int Column, DoubleMatrix ColumnVector)
 	{
 		int[] leftColumns = ArraysHelper.makeArray(0,Column-1);
@@ -426,71 +392,4 @@ public class RAEPropagation {
 								DoubleMatrix.concatHorizontally(ColumnVector,
 													CurrentEmbedding.getColumns(rightColumns)));
 	}
-
-	public static void main(String[] args) throws Exception
-	{
-		double alphaCat = 0.2, beta = 0.5; 
-		int hiddenSize = 50, DictionarySize = 14043;
-		DifferentiableMatrixFunction f = new Norm1Tanh();
-		
-		int[] data = new int[]{1, 0, 2315, 2914, 5, 13, 1, 7718, 5, 1, 5743, 13, 10718, 15, 141, 760, 14, 7, 3293, 5, 2245, 93, 25, 4236, 3922, 0, 9725, 0, 12, 1999, 2973, 5, 0, 3, 12800, 3, 12800, 3, 0, 12, 0, 3};
-		String dir = "data/parsed";
-		FileInputStream fis = new FileInputStream(dir + "/opttheta.dat");
-		ObjectInputStream ois = new ObjectInputStream(fis);
-		FineTunableTheta tunedTheta = (FineTunableTheta) ois.readObject();
-		ois.close();
-		
-		RAEPropagation prop = new RAEPropagation(alphaCat, beta, hiddenSize, DictionarySize, f);
-		DoubleMatrix WordsEmbedded = tunedTheta.We.getColumns(data);
-		
-//		for(int i=0; i<5; i++){
-//			for(int j=0; j<5; j++)
-//				System.out.printf("%.4f ",tunedTheta.We.get(i,j));
-//			System.out.println();
-//		}
-//		System.out.println();System.out.println();
-//		
-//		for(int i=0; i<5; i++){
-//			for(int j=0; j<5; j++)
-//				System.out.printf("%.4f ",WordsEmbedded.get(i,j));
-//			System.out.println();
-//		}
-//		System.out.println();System.out.println();
-		
-		Tree tree = prop.ForwardPropagate(tunedTheta, WordsEmbedded, null, 0, data.length);
-//		DoubleMatrix tf = new DoubleMatrix(hiddenSize,2*data.length-1);
-//		for(int i=0; i<2*data.length-1; i++)
-//		{
-//			tf.putColumn(i, tree.T[i].Features);
-//			if( tree.T[i].Features == null )
-//				System.err.println("First prop returns NULL");
-//		}
-//		System.out.printf("%d done\n",2 * data.length - 1 );
-		System.out.printf("%.4f \n", tree.TotalScore);
-//		DoubleMatrixFunctions.prettyPrint(tf);	
-		
-		
-		prop.BackPropagate(tree, (Theta)tunedTheta, data);
-		
-		prop = new RAEPropagation(alphaCat, beta, hiddenSize, 1, DictionarySize, f);
-		
-		tree = prop.ForwardPropagate(tunedTheta, WordsEmbedded, null, 0, data.length, tree.structure);
-		prop.BackPropagate(tree, tunedTheta, data);
-		
-		DoubleMatrixFunctions.prettyPrint(prop.GW1);
-		DoubleMatrixFunctions.prettyPrint(prop.GW2);
-		DoubleMatrixFunctions.prettyPrint(prop.GW3);
-		DoubleMatrixFunctions.prettyPrint(prop.GW4);
-		
-		DoubleMatrixFunctions.prettyPrint(prop.Gb1);
-		DoubleMatrixFunctions.prettyPrint(prop.Gb2);
-		DoubleMatrixFunctions.prettyPrint(prop.Gb3);
-		
-		DoubleMatrixFunctions.prettyPrint(prop.GWCat);
-		DoubleMatrixFunctions.prettyPrint(prop.Gbcat);
-		
-		
-
-	}
-
 }
