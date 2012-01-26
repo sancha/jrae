@@ -67,6 +67,7 @@ public class RAECostComputer
 				if(SentenceLength == 1)
 					return;
 				
+				
 				Tree tree = Propagator.ForwardPropagate(Theta, WordsEmbedded, FreqOrig, 
 										CurrentLabel, SentenceLength, AllKids[index]);
 				
@@ -78,7 +79,7 @@ public class RAECostComputer
 					num_nodes++;
 					DoubleArrays.addi(CalcGrad, Gradient);
 				}
-				lock.unlock();			
+				lock.unlock();
 			}
 		});
 		
@@ -116,14 +117,14 @@ public class RAECostComputer
 				AllKids[ index ] = tree.structure;
 				
 				double[] Gradient = Propagator.BackPropagate(tree, Theta, WordIndices).Theta;
-
+				
 				lock.lock();
 				{	
 					cost += tree.TotalScore; 
 			        num_nodes += SentenceLength;
 			        DoubleArrays.addi(CalcGrad, Gradient);
 		        }
-				lock.unlock();			
+				lock.unlock();	
 			}
 		});
 		

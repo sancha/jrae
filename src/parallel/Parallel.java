@@ -27,11 +27,8 @@ import java.util.concurrent.locks.ReentrantLock;
 public class Parallel {
 	private static final int NUM_CORES = Runtime.getRuntime().availableProcessors();
 
-	// TODO: replace with custom cached thread pool.
-	private static final ExecutorService forPool = Executors.newFixedThreadPool(NUM_CORES * 1);
-
 	public static <T,F> void For(final Collection<T> pElements, final Operation<T> pOperation) {
-		ExecutorService executor = forPool;
+		ExecutorService executor = Executors.newFixedThreadPool(NUM_CORES * 1);
 		List<Future<?>> futures = new LinkedList<Future<?>>();
 		List<Pair<Integer,T>> indexedElements = new ArrayList<Pair<Integer,T>>(pElements.size());
 		
