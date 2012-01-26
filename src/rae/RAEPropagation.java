@@ -9,7 +9,6 @@ public class RAEPropagation {
 	DifferentiableMatrixFunction f;
 	int HiddenSize, DictionaryLength, CatSize;
 	double AlphaCat, Beta;
-	Tree tree;
 	
 	private RAEPropagation(double AlphaCat, double Beta, int HiddenSize, 
 			int DictionaryLength, DifferentiableMatrixFunction f)
@@ -50,7 +49,7 @@ public class RAEPropagation {
 	public Tree ForwardPropagate(Theta theta, DoubleMatrix WordsEmbedded, FloatMatrix Freq, 
 						int CurrentLabel, int SentenceLength)
 	{
-		tree = new Tree( SentenceLength, HiddenSize, WordsEmbedded );
+		Tree tree = new Tree( SentenceLength, HiddenSize, WordsEmbedded );
 		ArrayList<Integer> CollapsedSentence = new ArrayList<Integer>( SentenceLength );
 		for(int i=0; i<SentenceLength; i++)		
 			CollapsedSentence.add(i);
@@ -142,19 +141,13 @@ public class RAEPropagation {
 	
 	/**
 	 * Returning the classification error for the given tree.
-	 * @param Kid
-	 * @param WordsEmbedded
-	 * @param Freq
-	 * @param CurrentLabel
-	 * @param SentenceLength
-	 * @return
 	 */
 	public Tree ForwardPropagate(FineTunableTheta theta, DoubleMatrix WordsEmbedded, FloatMatrix Freq, 
 						int CurrentLabel, int SentenceLength, Structure TreeStructure)
 	{
 		int CatSize = theta.Wcat.columns;
 		int TreeSize = 2 * SentenceLength - 1;
-		tree = new Tree( SentenceLength, HiddenSize, CatSize, WordsEmbedded );
+		Tree tree = new Tree( SentenceLength, HiddenSize, CatSize, WordsEmbedded );
 		int[] SubtreeSize = new int[ TreeSize ];
 
 		for(int i=SentenceLength; i< TreeSize; i++)

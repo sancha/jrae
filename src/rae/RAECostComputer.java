@@ -4,6 +4,7 @@ import java.util.*;
 import math.*;
 import org.jblas.*;
 import util.*;
+import parallel.*;
 import classify.LabeledDatum;
 
 public class RAECostComputer {
@@ -18,7 +19,6 @@ public class RAECostComputer {
 	
 	double[] CalcGrad, Gradient;
 	double cost;
-	Structure[] AllKids;
 	
 	public RAECostComputer(int CatSize, double AlphaCat, double Beta, int DictionaryLength, int HiddenSize
 				, List<LabeledDatum<Integer,Integer>> DataCell, FloatMatrix FreqOrig, DifferentiableMatrixFunction f){
@@ -32,57 +32,13 @@ public class RAECostComputer {
 		this.FreqOrig = FreqOrig;
 		this.f = f;
 		num_nodes = 0;
-		AllKids = new Structure[NumExamples];
-	}
-	
-	/**
-	 * This method is called by RAECost after building the Kids data
-	 * It is equivalent to calling computeCostAndGradRAE(allKids, theta2, 1 ....
-	 */
-	public double Compute(FineTunableTheta Theta, double[] Lambda) throws Exception
-	{
-		setLambdas(Lambda);
-		
-		cost = 0;
-		num_nodes = 0;
-		int CurrentDataIndex = 0;
-		CalcGrad = new double[ Theta.Theta.length ];
-		Propagator = new RAEPropagation(Theta,AlphaCat,Beta,HiddenSize,DictionaryLength,f);
-		
-		for(LabeledDatum<Integer,Integer> Data : DataCell)
-		{
-			int[] WordIndices = ArraysHelper.getIntArray( Data.getFeatures() );
-			DoubleMatrix WordsEmbedded = Theta.We.getColumns(WordIndices);
-			//FloatMatrix Freq = FreqOrig.getColumns(Data);
-			
-			int CurrentLabel = Data.getLabel();
-			int SentenceLength = WordsEmbedded.columns;
-			
-			if(SentenceLength == 1)
-				continue;
-			
-			Tree tree = Propagator.ForwardPropagate(Theta, WordsEmbedded, FreqOrig, 
-									CurrentLabel, SentenceLength, AllKids[CurrentDataIndex]);
-			
-			double[] Gradient = Propagator.BackPropagate(tree, Theta, WordIndices).Theta;
-			
-			cost += tree.TotalScore; 
-            num_nodes += SentenceLength;
-            DoubleArrays.addi(CalcGrad, Gradient);
-			
-            CurrentDataIndex++;
-			
-		}
-		
-		CalculateFineCosts(Theta);
-		return cost;		
 	}
 	
 	/**
 	 * This method is called first by RAECost to build the Kids data
 	 * It is equivalent to calling computeCostAndGradRAE([], theta1, 0 ....
 	 */
-	public double Compute(Theta Theta, double[] Lambda, DoubleMatrix WeOrig) throws Exception
+	public double Compute(Theta Theta, FineTunableTheta FTheta, double[] Lambda, DoubleMatrix WeOrig) throws Exception
 	{
 		setLambdas(Lambda);
 		cost = 0;
@@ -105,7 +61,18 @@ public class RAECostComputer {
 				continue;
 			
 			Tree tree = Propagator.ForwardPropagate(Theta, WordsEmbedded, FreqOrig, CurrentLabel, SentenceLength);
-			AllKids[ CurrentDataIndex ] = tree.structure;
+			
+			double[] Gradient = Propagator.BackPropagate(tree, Theta, WordIndices).Theta;
+			
+			cost += tree.TotalScore; 
+            num_nodes += SentenceLength;
+            DoubleArrays.addi(CalcGrad, Gradient);
+			
+            
+			WordsEmbedded = Theta.We.getColumns(WordIndices);
+			
+			tree = Propagator.ForwardPropagate(FTheta, WordsEmbedded, FreqOrig, 
+									CurrentLabel, SentenceLength, tree.structure);
 			
 			double[] Gradient = Propagator.BackPropagate(tree, Theta, WordIndices).Theta;
 			
@@ -114,6 +81,9 @@ public class RAECostComputer {
             DoubleArrays.addi(CalcGrad, Gradient);
 			
             CurrentDataIndex++;
+            
+            
+            
 		}
 		num_nodes -= NumExamples;
 		CalculateCosts(Theta);
@@ -129,11 +99,6 @@ public class RAECostComputer {
 	{
 		return cost;
 	}
-	
-	public Structure[] getKids()
-	{ 
-		return AllKids;
-	} 
 	
 	private void CalculateCosts(Theta Theta)
 	{
@@ -160,7 +125,6 @@ public class RAECostComputer {
 						+ 0.5 * LambdaL * DoubleMatrixFunctions.SquaredNorm(Theta.We)
 						+ 0.5 * LambdaCat * DoubleMatrixFunctions.SquaredNorm(Theta.Wcat);
 		
-		/** WNormSquared, DoubleMatrixFunctions.SquaredNorm(Theta.We), DoubleMatrixFunctions.SquaredNorm(Theta.Wcat)); **/
 		DoubleMatrix bcat0 = DoubleMatrix.zeros(CatSize,1);
 		DoubleMatrix b0 = DoubleMatrix.zeros(HiddenSize,1);
 		double[] WeightedGrad = (new FineTunableTheta(Theta.W1.mul(LambdaW),Theta.W2.mul(LambdaW),Theta.W3.mul(LambdaW),

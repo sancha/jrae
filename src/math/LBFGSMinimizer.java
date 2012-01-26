@@ -39,8 +39,8 @@ public class LBFGSMinimizer implements GradientMinimizer {
 					direction);
 			double nextValue = function.valueAt(nextGuess);
 			double[] nextDerivative = function.derivativeAt(nextGuess);
-			// System.err.println("Iteration " + iteration + " ended with value "
-			//	+ nextValue);
+			 System.err.println("Iteration " + iteration + " ended with value "
+				+ nextValue);
 			if (converged(value, nextValue, tolerance))
 				return nextGuess;
 			updateHistories(guess, nextGuess, derivative, nextDerivative);
