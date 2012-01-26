@@ -1,12 +1,16 @@
 package rae;
 
 import java.util.*;
+import java.util.concurrent.locks.*;
+
 import math.*;
 import org.jblas.*;
 import util.*;
-import classify.LabeledDatum;
+import classify.*;
+import parallel.*;
 
-public class RAECostComputer {
+public class RAECostComputer
+{
 	double AlphaCat, Beta;
 	double LambdaW, LambdaL, LambdaCat;
 	int CatSize, DictionaryLength, HiddenSize, NumExamples, num_nodes;
@@ -15,6 +19,7 @@ public class RAECostComputer {
 	RAEPropagation Propagator;
 	FloatMatrix FreqOrig;
 	DifferentiableMatrixFunction f;
+	Lock lock;
 	
 	double[] CalcGrad, Gradient;
 	double cost;
@@ -33,45 +38,49 @@ public class RAECostComputer {
 		this.f = f;
 		num_nodes = 0;
 		AllKids = new Structure[NumExamples];
+		lock = new ReentrantLock();
 	}
 	
 	/**
 	 * This method is called by RAECost after building the Kids data
 	 * It is equivalent to calling computeCostAndGradRAE(allKids, theta2, 1 ....
 	 */
-	public double Compute(FineTunableTheta Theta, double[] Lambda) throws Exception
+	public double Compute(final FineTunableTheta Theta, final double[] Lambda) throws Exception
 	{
 		setLambdas(Lambda);
 		
 		cost = 0;
 		num_nodes = 0;
-		int CurrentDataIndex = 0;
 		CalcGrad = DoubleArrays.constantArray(0,Theta.Theta.length);
 		Propagator = new RAEPropagation(Theta,AlphaCat,Beta,HiddenSize,DictionaryLength,f);
 		
-		for(LabeledDatum<Integer,Integer> Data : DataCell)
-		{
-			int[] WordIndices = ArraysHelper.getIntArray( Data.getFeatures() );
-			DoubleMatrix WordsEmbedded = Theta.We.getColumns(WordIndices);
-			//FloatMatrix Freq = FreqOrig.getColumns(Data);
-			
-			int CurrentLabel = Data.getLabel();
-			int SentenceLength = WordsEmbedded.columns;
-			
-			if(SentenceLength == 1)
-				continue;
-			
-			Tree tree = Propagator.ForwardPropagate(Theta, WordsEmbedded, FreqOrig, 
-									CurrentLabel, SentenceLength, AllKids[CurrentDataIndex]);
-			
-			double[] Gradient = Propagator.BackPropagate(tree, Theta, WordIndices).Theta;
-			
-			cost += tree.TotalScore; 
-            num_nodes++;
-            DoubleArrays.addi(CalcGrad, Gradient);
-            
-            CurrentDataIndex++;
-		}
+		Parallel.For(DataCell, new Parallel.Operation<LabeledDatum<Integer,Integer>>() {
+			public void perform(int index, LabeledDatum<Integer,Integer> Data)
+			{
+				int[] WordIndices = ArraysHelper.getIntArray( Data.getFeatures() );
+				DoubleMatrix WordsEmbedded = Theta.We.getColumns(WordIndices);
+				//FloatMatrix Freq = FreqOrig.getColumns(Data);
+				
+				int CurrentLabel = Data.getLabel();
+				int SentenceLength = WordsEmbedded.columns;
+				
+				if(SentenceLength == 1)
+					return;
+				
+				Tree tree = Propagator.ForwardPropagate(Theta, WordsEmbedded, FreqOrig, 
+										CurrentLabel, SentenceLength, AllKids[index]);
+				
+				double[] Gradient = Propagator.BackPropagate(tree, Theta, WordIndices).Theta;
+				
+				lock.lock();
+				{
+					cost += tree.TotalScore; 
+					num_nodes++;
+					DoubleArrays.addi(CalcGrad, Gradient);
+				}
+				lock.unlock();			
+			}
+		});
 		
 		CalculateFineCosts(Theta);
 		return cost;		
@@ -81,39 +90,43 @@ public class RAECostComputer {
 	 * This method is called first by RAECost to build the Kids data
 	 * It is equivalent to calling computeCostAndGradRAE([], theta1, 0 ....
 	 */
-	public double Compute(Theta Theta, double[] Lambda, DoubleMatrix WeOrig) throws Exception
+	public double Compute(final Theta Theta, final double[] Lambda, final DoubleMatrix WeOrig) throws Exception
 	{
 		setLambdas(Lambda);
+		
 		cost = 0;
 		num_nodes = 0;
-		int CurrentDataIndex = 0;
-		CalcGrad = new double[ Theta.Theta.length ];
+		CalcGrad = DoubleArrays.constantArray(0,Theta.Theta.length);
 		Propagator = new RAEPropagation(Theta,AlphaCat,Beta,HiddenSize,DictionaryLength,f);
 		
-		for(LabeledDatum<Integer,Integer> Data : DataCell)
-		{
-			int[] WordIndices = ArraysHelper.getIntArray( Data.getFeatures() );
-			DoubleMatrix L = Theta.We.getColumns(WordIndices);
-			DoubleMatrix WordsEmbedded = (WeOrig.getColumns(WordIndices)).addi(L);
-			//FloatMatrix Freq = FreqOrig.getColumns(Data);
-			
-			int CurrentLabel = Data.getLabel();
-			int SentenceLength = WordsEmbedded.columns;
+		Parallel.For(DataCell, new Parallel.Operation<LabeledDatum<Integer,Integer>>() {
+			public void perform(int index, LabeledDatum<Integer,Integer> Data)
+			{
+				int[] WordIndices = ArraysHelper.getIntArray( Data.getFeatures() );
+				DoubleMatrix L = Theta.We.getColumns(WordIndices);
+				DoubleMatrix WordsEmbedded = (WeOrig.getColumns(WordIndices)).addi(L);
+				
+				int CurrentLabel = Data.getLabel();
+				int SentenceLength = WordsEmbedded.columns;
+				
+				if(SentenceLength == 1)
+					return;
+				
+				Tree tree = Propagator.ForwardPropagate(Theta, WordsEmbedded, FreqOrig, CurrentLabel, SentenceLength);
+				AllKids[ index ] = tree.structure;
+				
+				double[] Gradient = Propagator.BackPropagate(tree, Theta, WordIndices).Theta;
+
+				lock.lock();
+				{	
+					cost += tree.TotalScore; 
+			        num_nodes += SentenceLength;
+			        DoubleArrays.addi(CalcGrad, Gradient);
+		        }
+				lock.unlock();			
+			}
+		});
 		
-			if(SentenceLength == 1)
-				continue;
-			
-			Tree tree = Propagator.ForwardPropagate(Theta, WordsEmbedded, FreqOrig, CurrentLabel, SentenceLength);
-			AllKids[ CurrentDataIndex ] = tree.structure;
-			
-			double[] Gradient = Propagator.BackPropagate(tree, Theta, WordIndices).Theta;
-			
-			cost += tree.TotalScore; 
-            num_nodes += SentenceLength;
-            DoubleArrays.addi(CalcGrad, Gradient);
-            
-            CurrentDataIndex++;
-		}
 		num_nodes -= NumExamples;
 		CalculateCosts(Theta);
 		return cost;
