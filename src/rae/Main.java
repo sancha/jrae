@@ -86,6 +86,7 @@ public class Main {
 		int hiddenSize = EmbeddingSize, visibleSize = EmbeddingSize;
 		
 		LBFGSMinimizer minFunc = new LBFGSMinimizer(MaxIterations);
+
 		FineTunableTheta InitialTheta = new FineTunableTheta(EmbeddingSize,EmbeddingSize,CatSize,DictionarySize,true);
 		
 		System.out.printf("%d\n%d\n%d\n%d\n",DictionarySize,hiddenSize,InitialTheta.Theta.length, InitialTheta.getThetaSize());
