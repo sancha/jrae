@@ -149,6 +149,13 @@ public class DoubleArrays {
         initialize((Object[]) o, d);
     }
   }
+  
+  public static double total(double[] x)
+  {
+	double sum = 0;
+	for(int i=0; i<x.length; i++) sum+=x[i];
+	return sum;
+  }  
 
   public static void prettyPrint(double[] x)
   {

@@ -46,7 +46,7 @@ public class RAECostComputer {
 		cost = 0;
 		num_nodes = 0;
 		int CurrentDataIndex = 0;
-		CalcGrad = new double[ Theta.Theta.length ];
+		CalcGrad = DoubleArrays.constantArray(0,Theta.Theta.length);
 		Propagator = new RAEPropagation(Theta,AlphaCat,Beta,HiddenSize,DictionaryLength,f);
 		
 		for(LabeledDatum<Integer,Integer> Data : DataCell)
@@ -67,11 +67,10 @@ public class RAECostComputer {
 			double[] Gradient = Propagator.BackPropagate(tree, Theta, WordIndices).Theta;
 			
 			cost += tree.TotalScore; 
-            num_nodes += SentenceLength;
+            num_nodes++;
             DoubleArrays.addi(CalcGrad, Gradient);
-			
+            
             CurrentDataIndex++;
-			
 		}
 		
 		CalculateFineCosts(Theta);
@@ -112,7 +111,7 @@ public class RAECostComputer {
 			cost += tree.TotalScore; 
             num_nodes += SentenceLength;
             DoubleArrays.addi(CalcGrad, Gradient);
-			
+            
             CurrentDataIndex++;
 		}
 		num_nodes -= NumExamples;
@@ -155,7 +154,7 @@ public class RAECostComputer {
 	{
 		double WNormSquared = DoubleMatrixFunctions.SquaredNorm(Theta.W1) + DoubleMatrixFunctions.SquaredNorm(Theta.W2) +
 				DoubleMatrixFunctions.SquaredNorm(Theta.W3) + DoubleMatrixFunctions.SquaredNorm(Theta.W4);
-
+		
 		cost = (1.0f/num_nodes)*cost + 0.5 * LambdaW * WNormSquared
 						+ 0.5 * LambdaL * DoubleMatrixFunctions.SquaredNorm(Theta.We)
 						+ 0.5 * LambdaCat * DoubleMatrixFunctions.SquaredNorm(Theta.Wcat);
