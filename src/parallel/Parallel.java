@@ -26,9 +26,10 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class Parallel {
 	private static final int NUM_CORES = Runtime.getRuntime().availableProcessors();
-
+	private static ExecutorService forPool = Executors.newFixedThreadPool(NUM_CORES -2);
+	
 	public static <T,F> void For(final Collection<T> pElements, final Operation<T> pOperation) {
-		ExecutorService executor = Executors.newFixedThreadPool(NUM_CORES * 1);
+		
 		List<Future<?>> futures = new LinkedList<Future<?>>();
 		List<Pair<Integer,T>> indexedElements = new ArrayList<Pair<Integer,T>>(pElements.size());
 		
@@ -41,7 +42,7 @@ public class Parallel {
 		
 		for (final Pair<Integer,T> element : indexedElements) {
 			try{
-				Future<?> future = executor.submit(new Runnable() {
+				Future<?> future = forPool.submit(new Runnable() {
 					@Override
 					public void run() {
 						pOperation.perform(element.getFirst(), element.getSecond());					
@@ -68,7 +69,11 @@ public class Parallel {
 				System.err.println(e.getMessage());
 			}
 		}
-		executor.shutdown();
+	}
+	
+	public void shutdown()
+	{
+		forPool.shutdown();
 	}
 
 	public static interface Operation<T> {
