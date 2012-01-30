@@ -11,6 +11,8 @@ import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.PrintStream;
 import java.util.*;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import math.DifferentiableMatrixFunction;
 import math.Norm1Tanh;
@@ -19,13 +21,15 @@ import org.jblas.*;
 
 import util.ArraysHelper;
 import util.CommandLineUtils;
-
+import parallel.*;
 import classify.*;
 
 public class RAEFeatureExtractor {
 	int HiddenSize;
 	FineTunableTheta Theta;
 	RAEPropagation Propagator;
+	DoubleMatrix features;
+	Lock lock;
 	
 	public RAEFeatureExtractor(int HiddenSize, FineTunableTheta Theta, double AlphaCat, double Beta, 
 								int CatSize, int DictionaryLength, DifferentiableMatrixFunction f)
@@ -33,23 +37,25 @@ public class RAEFeatureExtractor {
 		this.HiddenSize = HiddenSize;
 		this.Theta = Theta;
 		Propagator = new RAEPropagation(AlphaCat, Beta, HiddenSize, CatSize, DictionaryLength, f);
+		lock = new ReentrantLock();
 	}
 	
 	public DoubleMatrix extractFeatures(List<LabeledDatum<Integer,Integer>> Data)
 	{
 		int numExamples = Data.size();
-		DoubleMatrix features = DoubleMatrix.zeros(2*HiddenSize,numExamples);
+		features = DoubleMatrix.zeros(2*HiddenSize,numExamples);
 		
-		int CurrentDataIndex = 0;
-		for(LabeledDatum<Integer,Integer> data : Data)
-		{
-			double[] feature = extractFeatures(data);
-			features.putColumn(CurrentDataIndex, new DoubleMatrix(feature));
-			CurrentDataIndex++;
-			
-			if(CurrentDataIndex % 1000 == 0)
-				System.out.println("Finished extracting features for " + CurrentDataIndex + " items.");
-		}
+		Parallel.For(Data, new Parallel.Operation<LabeledDatum<Integer,Integer>>(){
+			public void perform(int index, LabeledDatum<Integer,Integer> data)
+			{
+				DoubleMatrix f = new DoubleMatrix( extractFeatures(data) );
+				lock.lock();
+				{
+					features.putColumn(index, f);
+				}
+				lock.unlock();
+			}
+		});
 		return features;
 	}
 	
