@@ -10,6 +10,14 @@ import java.lang.Math;
  */
 public class SloppyMath {
 
+	/**
+	 * If a difference is bigger than this in log terms, then the sum or
+	 * difference of them will just be the larger (to 12 or so decimal places
+	 * for double, and 7 or 8 for float).
+	 */
+	static final double LOGTOLERANCE = 30.0;
+	static final float LOGTOLERANCE_F = 20.0f;
+	
 	public static double min(int x, int y) {
 		if (x > y)
 			return y;

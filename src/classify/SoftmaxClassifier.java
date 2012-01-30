@@ -22,7 +22,7 @@ public class SoftmaxClassifier<F,L> implements ProbabilisticClassifier<F,L>{
 	
 	ClassifierTheta ClassifierTheta;
 	Sigmoid SigmoidCalc;
-	LBFGSMinimizer minFunc;
+	Minimizer<DifferentiableFunction> minFunc;
 	
 	Accuracy TrainAccuracy, TestAccuracy;
 	
@@ -30,7 +30,8 @@ public class SoftmaxClassifier<F,L> implements ProbabilisticClassifier<F,L>{
 	{
 		LabelSet = new Counter<L>();
 		SigmoidCalc = new Sigmoid();
-		minFunc = new LBFGSMinimizer(MaxIterations);
+		//minFunc = new LBFGSMinimizer(MaxIterations);
+		minFunc = new QNMinimizer(10,MaxIterations);
 	}
 	
 	public Accuracy train(List<LabeledDatum<F,L>> Data)
@@ -44,7 +45,7 @@ public class SoftmaxClassifier<F,L> implements ProbabilisticClassifier<F,L>{
 		ClassifierTheta = new ClassifierTheta(Features.rows,CatSize);
 		double[] InitialTheta = ClassifierTheta.Theta;
 		
-		double[] OptimalTheta = minFunc.minimize(TrainingCostFunction, InitialTheta, 1e-6);
+		double[] OptimalTheta = minFunc.minimize(TrainingCostFunction, 1e-6, InitialTheta);
 		ClassifierTheta = new ClassifierTheta(OptimalTheta,Features.rows,CatSize);
 		DoubleMatrix W = ClassifierTheta.W, b = ClassifierTheta.b;
 		

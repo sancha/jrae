@@ -85,7 +85,8 @@ public class SoftmaxCost implements DifferentiableFunction
 	public double[] derivativeAt(double[] x) 
 	{
 		if(Gradient == null)
-			System.err.println("Derivation query before value query");
+			valueAt(x);
+			//System.err.println("Derivation query before value query");
 		double[] theta = Gradient.Theta;
 		Gradient = null;
 		return theta;
