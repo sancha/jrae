@@ -85,7 +85,7 @@ public class Main {
 		int DictionarySize = Dataset.Vocab.size();
 		int hiddenSize = EmbeddingSize, visibleSize = EmbeddingSize;
 		
-		LBFGSMinimizer minFunc = new LBFGSMinimizer(MaxIterations);
+		Minimizer<DifferentiableFunction> minFunc = new QNMinimizer(10, MaxIterations);
 
 		FineTunableTheta InitialTheta = new FineTunableTheta(EmbeddingSize,EmbeddingSize,CatSize,DictionarySize,true);
 		
@@ -103,7 +103,7 @@ public class Main {
 			{
 				RAECost = new RAECost(AlphaCat,CatSize,Beta,DictionarySize,hiddenSize,visibleSize,
 												Lambda,InitialTheta.We,trainingData,null,f);
-				double[] minTheta = minFunc.minimize(RAECost, InitialTheta.Theta, 1e-6);
+				double[] minTheta = minFunc.minimize(RAECost, 1e-6, InitialTheta.Theta);
 				tunedTheta = new FineTunableTheta(minTheta, hiddenSize,visibleSize, CatSize, DictionarySize);
 			}
 			else 
