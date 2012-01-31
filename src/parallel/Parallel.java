@@ -26,7 +26,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class Parallel {
 	private static final int NUM_CORES = Runtime.getRuntime().availableProcessors();
-	private static ExecutorService forPool = Executors.newFixedThreadPool(NUM_CORES -2);
+	private static ExecutorService forPool = Executors.newFixedThreadPool(NUM_CORES);
 	
 	public static <T,F> void For(final Collection<T> pElements, final Operation<T> pOperation) {
 		

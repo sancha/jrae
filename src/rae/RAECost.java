@@ -66,7 +66,11 @@ public class RAECost implements DifferentiableFunction {
 
 	@Override
 	public double[] derivativeAt(double[] x){
-		return gradient;
+		if( gradient == null )
+			valueAt(x);
+		double[] retGrad = gradient;
+		gradient = null;
+		return retGrad;
 	}
 
 }

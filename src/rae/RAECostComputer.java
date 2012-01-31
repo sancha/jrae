@@ -19,10 +19,9 @@ public class RAECostComputer
 	RAEPropagation Propagator;
 	FloatMatrix FreqOrig;
 	DifferentiableMatrixFunction f;
-	Lock lock;
-	
-	double[] CalcGrad, Gradient;
+	double[] Gradient;
 	double cost;
+	Lock lock;
 	Structure[] AllKids;
 	
 	public RAECostComputer(int CatSize, double AlphaCat, double Beta, int DictionaryLength, int HiddenSize
@@ -51,9 +50,8 @@ public class RAECostComputer
 		
 		cost = 0;
 		num_nodes = 0;
-		CalcGrad = DoubleArrays.constantArray(0,Theta.Theta.length);
 		Propagator = new RAEPropagation(Theta,AlphaCat,Beta,HiddenSize,DictionaryLength,f);
-		
+
 		Parallel.For(DataCell, new Parallel.Operation<LabeledDatum<Integer,Integer>>() {
 			public void perform(int index, LabeledDatum<Integer,Integer> Data)
 			{
@@ -67,24 +65,22 @@ public class RAECostComputer
 				if(SentenceLength == 1)
 					return;
 				
-				
 				Tree tree = Propagator.ForwardPropagate(Theta, WordsEmbedded, FreqOrig, 
 										CurrentLabel, SentenceLength, AllKids[index]);
 				
-				double[] Gradient = Propagator.BackPropagate(tree, Theta, WordIndices).Theta;
+				Propagator.BackPropagate(tree, Theta, WordIndices);
 				
 				lock.lock();
 				{
 					cost += tree.TotalScore; 
 					num_nodes++;
-					DoubleArrays.addi(CalcGrad, Gradient);
 				}
 				lock.unlock();
 			}
 		});
 		
 		CalculateFineCosts(Theta);
-		return cost;		
+		return cost;	
 	}
 	
 	/**
@@ -97,7 +93,6 @@ public class RAECostComputer
 		
 		cost = 0;
 		num_nodes = 0;
-		CalcGrad = DoubleArrays.constantArray(0,Theta.Theta.length);
 		Propagator = new RAEPropagation(Theta,AlphaCat,Beta,HiddenSize,DictionaryLength,f);
 		
 		Parallel.For(DataCell, new Parallel.Operation<LabeledDatum<Integer,Integer>>() {
@@ -110,21 +105,20 @@ public class RAECostComputer
 				int CurrentLabel = Data.getLabel();
 				int SentenceLength = WordsEmbedded.columns;
 				
-				if(SentenceLength == 1)
+				if(SentenceLength == 1) 
 					return;
 				
 				Tree tree = Propagator.ForwardPropagate(Theta, WordsEmbedded, FreqOrig, CurrentLabel, SentenceLength);
 				AllKids[ index ] = tree.structure;
 				
-				double[] Gradient = Propagator.BackPropagate(tree, Theta, WordIndices).Theta;
+				Propagator.BackPropagate(tree, Theta, WordIndices);
 				
 				lock.lock();
 				{	
 					cost += tree.TotalScore; 
 			        num_nodes += SentenceLength;
-			        DoubleArrays.addi(CalcGrad, Gradient);
 		        }
-				lock.unlock();	
+				lock.unlock();
 			}
 		});
 		
@@ -156,6 +150,10 @@ public class RAECostComputer
 		cost = (1.0f/num_nodes)*cost + 0.5 * LambdaW * WNormSquared 
 							 + 0.5 * LambdaL * DoubleMatrixFunctions.SquaredNorm(Theta.We);
 		
+		double[] CalcGrad = (new Theta(Propagator.GW1, Propagator.GW2,
+				Propagator.GW3, Propagator.GW4, Propagator.GWe_total,
+				Propagator.Gb1, Propagator.Gb2, Propagator.Gb3)).Theta;
+		
 		DoubleMatrix b0 = DoubleMatrix.zeros(HiddenSize,1);
 		double[] WeightedGrad = (new Theta(Theta.W1.mul(LambdaW),Theta.W2.mul(LambdaW),Theta.W3.mul(LambdaW),
 		Theta.W4.mul(LambdaW),Theta.We.mul(LambdaL),b0,b0,b0)).Theta; 
@@ -178,6 +176,12 @@ public class RAECostComputer
 		DoubleMatrix b0 = DoubleMatrix.zeros(HiddenSize,1);
 		double[] WeightedGrad = (new FineTunableTheta(Theta.W1.mul(LambdaW),Theta.W2.mul(LambdaW),Theta.W3.mul(LambdaW),
 		Theta.W4.mul(LambdaW),Theta.Wcat.mul(LambdaCat),Theta.We.mul(LambdaL),b0,b0,b0,bcat0)).Theta; 
+		
+
+		double[] CalcGrad = (new FineTunableTheta(Propagator.GW1,
+				Propagator.GW2, Propagator.GW3, Propagator.GW4,
+				Propagator.GWCat, Propagator.GWe_total, Propagator.Gb1,
+				Propagator.Gb2, Propagator.Gb3, Propagator.Gbcat)).Theta;
 		
 		DoubleArrays.scale(CalcGrad, (1.0f/num_nodes));
 		Gradient = DoubleArrays.add(CalcGrad, WeightedGrad);		

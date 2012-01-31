@@ -110,11 +110,6 @@ public class Main {
 			{
 				System.out.println("Reading the mat files ...");
 				
-	// 			load tunedTheta from disk using serialization
-	//			MatFile DataLoader = new MatFile(dir + "/jopttheta.mat"); 
-	//			double[] OptTheta = DataLoader.readThetaVector("opttheta");
-	//			tunedTheta = new FineTunableTheta(OptTheta, hiddenSize,visibleSize, CatSize, DictionarySize);
-				
 				FileInputStream fis = new FileInputStream(dir + "/opttheta.dat");
 				ObjectInputStream ois = new ObjectInputStream(fis);
 				tunedTheta = (FineTunableTheta) ois.readObject();
