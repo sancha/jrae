@@ -3,14 +3,9 @@ package rae;
 import io.DataSet;
 import io.MatProcessData;
 
-import java.io.BufferedReader;
-import java.io.DataInputStream;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.ObjectInputStream;
-import java.io.PrintStream;
+import java.io.*;
 import java.util.*;
+import java.util.concurrent.locks.*;
 
 import math.DifferentiableMatrixFunction;
 import math.Norm1Tanh;
@@ -21,11 +16,14 @@ import util.ArraysHelper;
 import util.CommandLineUtils;
 
 import classify.*;
+import parallel.*;
 
 public class RAEFeatureExtractor {
 	int HiddenSize;
 	FineTunableTheta Theta;
 	RAEPropagation Propagator;
+	DoubleMatrix features;
+	Lock lock;
 	
 	public RAEFeatureExtractor(int HiddenSize, FineTunableTheta Theta, double AlphaCat, double Beta, 
 								int CatSize, int DictionaryLength, DifferentiableMatrixFunction f)
@@ -33,23 +31,25 @@ public class RAEFeatureExtractor {
 		this.HiddenSize = HiddenSize;
 		this.Theta = Theta;
 		Propagator = new RAEPropagation(AlphaCat, Beta, HiddenSize, CatSize, DictionaryLength, f);
+		lock = new ReentrantLock();
 	}
 	
 	public DoubleMatrix extractFeatures(List<LabeledDatum<Integer,Integer>> Data)
 	{
 		int numExamples = Data.size();
-		DoubleMatrix features = DoubleMatrix.zeros(2*HiddenSize,numExamples);
-		
-		int CurrentDataIndex = 0;
-		for(LabeledDatum<Integer,Integer> data : Data)
-		{
-			double[] feature = extractFeatures(data);
-			features.putColumn(CurrentDataIndex, new DoubleMatrix(feature));
-			CurrentDataIndex++;
-			
-			if(CurrentDataIndex % 1000 == 0)
-				System.out.println("Finished extracting features for " + CurrentDataIndex + " items.");
-		}
+		features = DoubleMatrix.zeros(2*HiddenSize,numExamples);
+
+		Parallel.For(Data, new Parallel.Operation<LabeledDatum<Integer,Integer>>(){
+			@Override
+			public void perform(int index, LabeledDatum<Integer, Integer> data) {
+				double[] feature = extractFeatures(data);
+				lock.lock();
+				{
+					features.putColumn(index, new DoubleMatrix(feature));				
+				}
+				lock.unlock();
+			}
+		});	
 		return features;
 	}
 	
@@ -73,7 +73,7 @@ public class RAEFeatureExtractor {
 		{
 			for(int i=0; i<TreeSize; i++)
 				tf.putColumn(i, tree.T[i].Features);
-			tf.muli(1.0/(double)TreeSize);
+			tf.muli(1.0/TreeSize);
 			
 			System.arraycopy(tree.T[ 2 * SentenceLength - 2 ].Features.data, 0, feature, 0, HiddenSize);
 			System.arraycopy(tf.rowSums().data, 0, feature, HiddenSize, HiddenSize);
@@ -108,14 +108,12 @@ public class RAEFeatureExtractor {
 		}
 		
 		try{
-			PrintStream out = new PrintStream(featuresOutputFile);
-			
 			MatProcessData Dataset = new MatProcessData(dir);	
 			int EmbeddingSize = 50; 
 			double AlphaCat = 0.2, Beta = 0.5;
 			DifferentiableMatrixFunction f = new Norm1Tanh(); 
 			
-			FileInputStream fis = new FileInputStream(dir + "/opttheta.dat");
+			FileInputStream fis = new FileInputStream(dir + "/save1.dat");
 			ObjectInputStream ois = new ObjectInputStream(fis);
 			FineTunableTheta tunedTheta = (FineTunableTheta) ois.readObject();
 			ois.close();
@@ -127,6 +125,8 @@ public class RAEFeatureExtractor {
 	        DataInputStream in = new DataInputStream(fstream);
 	        BufferedReader br = new BufferedReader(new InputStreamReader(in));
 
+	        PrintStream out = new PrintStream(featuresOutputFile);
+	        
 	        int itemNo = 0;
 	        while ((strLine = br.readLine()) != null)
 	        {
@@ -154,6 +154,7 @@ public class RAEFeatureExtractor {
 		catch(IOException e)
 		{
 			System.err.println(e.getMessage());
+			e.printStackTrace();
 		}
 		catch(ClassNotFoundException e)
 		{

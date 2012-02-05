@@ -96,12 +96,14 @@ public class FineTunableTheta extends Theta{
 		oos.close();
 	}
 	
+	@Override
 	public int getThetaSize()
 	{
 		return 4 * hiddenSize * visibleSize + hiddenSize * dictionaryLength 
                 + hiddenSize + 2 * visibleSize + CatSize * hiddenSize + CatSize;
 	}
 
+	@Override
 	protected void InitializeMatrices()
 	{
 		super.InitializeMatrices();
@@ -109,6 +111,7 @@ public class FineTunableTheta extends Theta{
 		bcat = DoubleMatrix.zeros(CatSize, 1);
 	}
 	
+	@Override
 	protected void InitializeMatricesToZeros()
 	{
 		super.InitializeMatricesToZeros();
@@ -116,6 +119,7 @@ public class FineTunableTheta extends Theta{
 		bcat = DoubleMatrix.zeros(CatSize, 1);
 	}
 	
+	@Override
 	protected void flatten(double[] Theta)
 	{
 		fixIndices();
@@ -124,6 +128,7 @@ public class FineTunableTheta extends Theta{
 		System.arraycopy(bcat.toArray(), 0, Theta, bbegins[5], CatSize);			
 	}
 	
+	@Override
 	protected void fixIndices()
 	{
 		super.fixIndices();

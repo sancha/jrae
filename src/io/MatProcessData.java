@@ -87,22 +87,4 @@ public class MatProcessData extends LabeledDataSet<LabeledDatum<Integer,Integer>
         in.close();
         return Vocab;
 	}
-	
-	public static void main(String[] args) throws IOException {
-        LabeledDataSet<LabeledDatum<Integer,Integer>,Integer,Integer> Data = new MatProcessData("data/parsed/");
-        System.out.println();
-        int CatSize = Data.labelSet.size()-1;
-        int DictionarySize = Data.Vocab.size();
-        
-        int i=0;
-        for(LabeledDatum<Integer,Integer> e : Data.Data)
-        {
-        	System.out.println( e.toString() );
-        	i++;
-        	if( i>10 )
-        		break;
-        }
-		System.out.println("CatSize : " + CatSize );
-		System.out.println("DictionarySize : " + DictionarySize );
-	}
 }

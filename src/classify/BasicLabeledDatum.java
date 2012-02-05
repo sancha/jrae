@@ -23,7 +23,8 @@ public class BasicLabeledDatum <F,L> implements LabeledDatum<F, L> {
     return features;
   }
 
-  public String toString() {
+  @Override
+public String toString() {
     return "<" + getLabel() + " : " + getFeatures().toString() + ">";
   }
 

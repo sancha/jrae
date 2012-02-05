@@ -96,6 +96,7 @@ public class GenericCounterMap<K, V, X> {
 		return size() == 0;
 	}
 
+	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder("[\n");
 		for (Map.Entry<K, GenericCounter<V,X>> entry : counterMap.entrySet()) {

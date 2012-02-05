@@ -19,6 +19,7 @@ public abstract class MapFactory<K,V> implements Serializable {
 	public static class HashMapFactory<K,V> extends MapFactory<K,V> {
 		private static final long serialVersionUID = 2657564834752639043L;
 
+		@Override
 		public Map<K, V> buildMap() {
 			return new HashMap<K, V>();
    }
@@ -27,6 +28,7 @@ public abstract class MapFactory<K,V> implements Serializable {
   public static class IdentityHashMapFactory<K,V> extends MapFactory<K,V> {
 	private static final long serialVersionUID = 6428508886695719630L;
 
+	@Override
 	public Map<K,V> buildMap() {
       return new IdentityHashMap<K,V>();
     }
@@ -35,6 +37,7 @@ public abstract class MapFactory<K,V> implements Serializable {
   public static class TreeMapFactory<K,V> extends MapFactory<K,V> {
 	private static final long serialVersionUID = -1446559074661469861L;
 
+	@Override
 	public Map<K,V> buildMap() {
       return new TreeMap<K,V>();
     }
@@ -43,6 +46,7 @@ public abstract class MapFactory<K,V> implements Serializable {
   public static class WeakHashMapFactory<K,V> extends MapFactory<K,V> {
 	private static final long serialVersionUID = -2364411029136068572L;
 
+	@Override
 	public Map<K,V> buildMap() {
       return new WeakHashMap<K,V>();
     }

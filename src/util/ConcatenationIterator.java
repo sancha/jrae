@@ -61,19 +61,4 @@ public class ConcatenationIterator<E> implements Iterator<E> {
   public ConcatenationIterator(Collection<Iterator<E>> iteratorCollection) {
     this(iteratorCollection.iterator());
   }
-
-  public static void main(String[] args) {
-    List<String> list0 = Collections.emptyList();
-    List<String> list1 = Arrays.asList("a b c d".split(" "));
-    List<String> list2 = Arrays.asList("e f".split(" "));
-    List<Iterator<String>> iterators = new ArrayList<Iterator<String>>();
-    iterators.add(list1.iterator());
-    iterators.add(list0.iterator());
-    iterators.add(list2.iterator());
-    iterators.add(list0.iterator());
-    Iterator<String> iterator = new ConcatenationIterator<String>(iterators);
-    while (iterator.hasNext()) {
-      System.out.println(iterator.next());
-    }
-  }
 }

@@ -18,14 +18,16 @@ public class Index <E> extends AbstractList<E> {
    *
    * @param index
    */
-  public E get(int index) {
+  @Override
+public E get(int index) {
     return objects.get(index);
   }
 
   /**
    * Returns the number of objects indexed.
    */
-  public int size() {
+  @Override
+public int size() {
     return objects.size();
   }
 
@@ -35,7 +37,8 @@ public class Index <E> extends AbstractList<E> {
    *
    * @param o
    */
-  public int indexOf(Object o) {
+  @Override
+public int indexOf(Object o) {
     Integer index = indexes.get(o);
     if (index == null)
       return -1;
@@ -45,7 +48,8 @@ public class Index <E> extends AbstractList<E> {
   /**
    * Constant time override for contains.
    */
-  public boolean contains(Object o) {
+  @Override
+public boolean contains(Object o) {
     return indexes.keySet().contains(o);
   }
 
@@ -55,7 +59,8 @@ public class Index <E> extends AbstractList<E> {
    *
    * @param e
    */
-  public boolean add(E e) {
+  @Override
+public boolean add(E e) {
     if (contains(e)) return false;
     objects.add(e);
     indexes.put(e, size() - 1);

@@ -174,6 +174,7 @@ public class PriorityQueue<E> implements Iterator<E>, Serializable, Cloneable {
 	/**
 	 * Returns a representation of the queue in decreasing priority order.
 	 */
+	@Override
 	public String toString() {
 		return toString(size());
 	}
@@ -226,6 +227,7 @@ public class PriorityQueue<E> implements Iterator<E>, Serializable, Cloneable {
 	 * Returns a clone of this priority queue. Modifications to one will not
 	 * affect modifications to the other.
 	 */
+	@Override
 	public PriorityQueue<E> clone() {
 		PriorityQueue<E> clonePQ = new PriorityQueue<E>();
 		clonePQ.size = size;
@@ -249,22 +251,5 @@ public class PriorityQueue<E> implements Iterator<E>, Serializable, Cloneable {
 			legalCapacity = 2 * legalCapacity + 1;
 		}
 		grow(legalCapacity);
-	}
-
-	public static void main(String[] args) {
-		PriorityQueue<String> pq = new PriorityQueue<String>();
-		System.out.println(pq);
-		pq.add("one", 1);
-		System.out.println(pq);
-		pq.add("three", 3);
-		System.out.println(pq);
-		pq.add("one", 1.1);
-		System.out.println(pq);
-		pq.add("two", 2);
-		System.out.println(pq);
-		System.out.println(pq.toString(2));
-		while (pq.hasNext()) {
-			System.out.println(pq.next());
-		}
 	}
 }

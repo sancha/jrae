@@ -7,7 +7,7 @@ public class GradientChecker {
 	public static boolean check(DifferentiableFunction Func)
 	{
 		int size = Func.dimension();
-		double p = (double) size;
+		double p = size;
 		int attempts = 10;
 		while( attempts > 0 )
 		{

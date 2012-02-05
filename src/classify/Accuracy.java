@@ -23,6 +23,7 @@ public class Accuracy
 		F1 = ( 2 * Precision * Recall ) / (Precision + Recall);
 	}
 	
+	@Override
 	public String toString()
 	{
 		String S = "\n{" + 

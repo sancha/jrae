@@ -13,6 +13,7 @@ public class Norm1Tanh extends DifferentiableMatrixFunction {
 	 * y = (x-x.^3)
 	 * diag(1-x.^2)./nrm - y*x'./nrm^3
 	 */	
+	@Override
 	public DoubleMatrix derivativeAt(DoubleMatrix M)
 	{
 		double norm = M.norm2();
@@ -29,24 +30,26 @@ public class Norm1Tanh extends DifferentiableMatrixFunction {
 	 * @return Return the plain tanh of the function, NOT norm
 	 * as in the original matlab file.
 	 */
+	@Override
 	public DoubleMatrix valueAt(DoubleMatrix M)
 	{
 		return MatrixFunctions.tanh(M);
 	}
-	
+
+	/**
 	public static void main(String[] args)
 	{
 		DoubleMatrix p = new DoubleMatrix(new double[]{1,2,3,4});
 		Norm1Tanh t = new Norm1Tanh();
 		System.out.println(p);
 		System.out.println(t.derivativeAt(p));
-		/** 
-		 * norm1tanh_prime([1 2 3 4]')
-				0         0         0         0
-		   0.0365   -0.4747    0.1095    0.1461
-		   0.1461    0.2921   -1.0224    0.5842
-		   0.3651    0.7303    1.0954   -1.2780
-		**/
+		 
+//		  norm1tanh_prime([1 2 3 4]')
+//				0         0         0         0
+//		   0.0365   -0.4747    0.1095    0.1461
+//		   0.1461    0.2921   -1.0224    0.5842
+//		   0.3651    0.7303    1.0954   -1.2780
+		
 	}
-	
+	**/
 }

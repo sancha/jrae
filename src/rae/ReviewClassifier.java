@@ -59,7 +59,7 @@ public class ReviewClassifier
 			DifferentiableMatrixFunction f = new Norm1Tanh(); 
 			
 			System.out.println("loading the pre-learnt RAE ...");
-			FileInputStream fis = new FileInputStream(dir + "/opttheta.dat");
+			FileInputStream fis = new FileInputStream(dir + "/save1.dat");
 			ObjectInputStream ois = new ObjectInputStream(fis);
 			FineTunableTheta tunedTheta = (FineTunableTheta) ois.readObject();
 			ois.close();

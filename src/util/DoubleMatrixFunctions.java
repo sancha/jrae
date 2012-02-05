@@ -40,12 +40,4 @@ public abstract class DoubleMatrixFunctions {
 		}
 		System.out.println();System.out.println();
 	}
-	
-	public static void main(String[] args)
-	{
-		DoubleMatrix p = new DoubleMatrix(new double[]{1,2,3,4});
-		p = p.reshape(2,2).transpose();
-		System.out.println(p);
-		System.out.println(ColumnWiseNormalize(p));
-	}
 }

@@ -3,8 +3,6 @@ package parallel;
 import util.*;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Copyright 2011 Tantaman LLC
@@ -25,7 +23,7 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 
 public class Parallel {
-	private static final int NUM_CORES = Runtime.getRuntime().availableProcessors();
+	private static final int NUM_CORES = 1; //Runtime.getRuntime().availableProcessors();
 	private static ExecutorService forPool = Executors.newFixedThreadPool(NUM_CORES);
 	
 	public static <T,F> void For(final Collection<T> pElements, final Operation<T> pOperation) {
@@ -78,42 +76,5 @@ public class Parallel {
 
 	public static interface Operation<T> {
 		public void perform(int index, T pParameter);
-	}
-
-	public static void main(String[] args) {
-		Parallel pr = new Parallel();
-		
-		List<Integer> elems = new LinkedList<Integer>();
-		for (int i = 0; i < 20; ++i) {
-			elems.add(i);
-		}
-		
-		TotalMaintain t = pr.new TotalMaintain();
-		Parallel.For(elems,t);
-		System.out.println(t);
-	}
-	
-	public class TotalMaintain implements Operation<Integer>
-	{
-		int sum;
-		private Lock lock;
-		
-		public TotalMaintain()
-		{
-			sum = 0;
-			lock = new ReentrantLock();
-		}
-		
-		@Override
-		public void perform(int index, Integer pParameter) {
-			lock.lock();
-			sum += pParameter;
-			lock.unlock();
-		}
-		
-		public String toString()
-		{
-			return new String(sum+"");
-		}
 	}
 }

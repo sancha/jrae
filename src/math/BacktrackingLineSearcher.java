@@ -58,21 +58,4 @@ public class BacktrackingLineSearcher implements GradientLineSearcher {
 //    return lastGuess;
     return guess;
   }
-  public static void main(String[] args) {
-    DifferentiableFunction function = new DifferentiableFunction() {
-      public int dimension() {
-        return 1;
-      }
-
-      public double valueAt(double[] x) {
-        return x[0] * (x[0] - 0.01);
-      }
-
-      public double[] derivativeAt(double[] x) {
-        return new double[] { 2*x[0] - 0.01 };
-      }
-    };
-    BacktrackingLineSearcher lineSearcher = new BacktrackingLineSearcher();
-    lineSearcher.minimize(function, new double[] { 0 }, new double[] { 1 });
-  }
 }

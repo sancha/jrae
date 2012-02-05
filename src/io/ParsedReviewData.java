@@ -112,25 +112,4 @@ public class ParsedReviewData extends LabeledDataSet<LabeledDatum<Integer,Intege
 			return WordsIndexer.get(Word);
 		return WordsIndexer.get( DataSet.UNK );
 	}
-	
-	public static void main(String[] args) throws IOException {
-		//String dir = "D:/Project/NeuralNets/data"; //DanSeng
-		String dir = "data/amazon/2k"; //ssanjeev
-		//String dir = "data\\amazon\\2k\\"; //ssanjeev
-		LabeledDataSet<LabeledDatum<Integer,Integer>,Integer,Integer> Dataset = new ParsedReviewData(dir);	
-        System.out.println();
-        int CatSize = Dataset.labelSet.size()-1;
-        int DictionarySize = Dataset.Vocab.size();
-        
-        int i=0;
-        for(LabeledDatum<Integer,Integer> e : Dataset.Data)
-        {
-        	System.out.println( e.toString() );
-        	i++;
-        	if( i>10 )
-        		break;
-        }
-		System.out.println("CatSize : " + CatSize );
-		System.out.println("DictionarySize : " + DictionarySize );
-	}
 }

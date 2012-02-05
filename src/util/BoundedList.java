@@ -21,13 +21,15 @@ public class BoundedList <E> extends AbstractList<E> {
    * object is returned.  The default boundary objects are both null, unless
    * other objects are specified on construction.
    */
-  public E get(int index) {
+  @Override
+public E get(int index) {
     if (index < 0) return leftBoundary;
     if (index >= list.size()) return rightBoundary;
     return list.get(index);
   }
 
-  public int size() {
+  @Override
+public int size() {
     return list.size();
   }
 

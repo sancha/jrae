@@ -22,6 +22,7 @@ public class Triplet<F, S, T> {
 		return third;
 	}
 
+	@Override
 	public boolean equals(Object o) {
 		if (this == o)
 			return true;
@@ -43,6 +44,7 @@ public class Triplet<F, S, T> {
 		return true;
 	}
 
+	@Override
 	public int hashCode() {
 		int result;
 		result = (first != null ? first.hashCode() : 0);
@@ -51,6 +53,7 @@ public class Triplet<F, S, T> {
 		return result;
 	}
 
+	@Override
 	public String toString() {
 		return "(" + getFirst() + ", " + getSecond() + ", " + getThird() + ")";
 	}

@@ -42,27 +42,4 @@ public class MatFile {
 		}
 		return ret;
 	}
-	
-	public void writeDoubleMatrix(DoubleMatrix inp, String VarName)
-	{
-		
-	}
-
-	public static void main(String[] args) throws Exception 
-	{
-		String dir = "data/parsed";
-		MatFile DataLoader = new MatFile(dir + "/optParams.mat");
-
-		final long startTime = System.nanoTime();
-		final long endTime;
-		double[] OptTheta = DataLoader.readThetaVector("opttheta");
-		endTime = System.nanoTime();
-		final long duration = endTime - startTime;
-		System.out.println("OptTheta loaded of size : " + OptTheta.length + " in " + duration + " nanoseconds");
-	
-
-		 DataLoader = new MatFile(dir + "/We2.mat");
-		 DoubleMatrix WeOrig = DataLoader.readOriginalWe("We2");
-		 System.out.println("WeOrig loaded of size : " + WeOrig.rows + " " + WeOrig.columns);
-	}
 }

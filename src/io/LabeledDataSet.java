@@ -45,6 +45,7 @@ public class LabeledDataSet<T extends LabeledDatum<F,L>,F,L> extends DataSet<T,F
 				this.labelSet.put(label, labelCount++);
 	}
 	
+	@Override
 	public boolean add(T Datum)
 	{
 		L label = Datum.getLabel();

@@ -130,7 +130,8 @@ public class CounterMap<K, V> {
     return size() == 0;
   }
 
-  public String toString() {
+  @Override
+public String toString() {
     StringBuilder sb = new StringBuilder("[\n");
     for (Map.Entry<K, Counter<V>> entry : counterMap.entrySet()) {
       sb.append("  ");
@@ -141,22 +142,5 @@ public class CounterMap<K, V> {
     }
     sb.append("]");
     return sb.toString();
-  }
-
-  // -----------------------------------------------------------------------
-
-  public static void main(String[] args) {
-    CounterMap<String, String> bigramCounterMap = new CounterMap<String, String>();
-    bigramCounterMap.incrementCount("people", "run", 1);
-    bigramCounterMap.incrementCount("cats", "growl", 2);
-    bigramCounterMap.incrementCount("cats", "scamper", 3);
-    System.out.println(bigramCounterMap);
-    System.out.println("Entries for cats: " + bigramCounterMap.getCounter("cats"));
-    System.out.println("Entries for dogs: " + bigramCounterMap.getCounter("dogs"));
-    System.out.println("Count of cats scamper: " + bigramCounterMap.getCount("cats", "scamper"));
-    System.out.println("Count of snakes slither: " + bigramCounterMap.getCount("snakes", "slither"));
-    System.out.println("Total size: " + bigramCounterMap.totalSize());
-    System.out.println("Total count: " + bigramCounterMap.totalCount());
-    System.out.println(bigramCounterMap);
   }
 }
