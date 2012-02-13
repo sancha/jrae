@@ -5,10 +5,10 @@ import java.util.*;
 import org.jblas.*;
 import classify.LabeledDatum;
 
-public class RAECost implements DifferentiableFunction {
+public class RAECost extends MemoizedDifferentiableFunction {
 
 	RAECostComputer Computer;
-	double[] gradient, Lambda, FTLambda;
+	double[] Lambda, FTLambda;
 	double value, AlphaCat;
 	DoubleMatrix WeOrig;
 	int hiddenSize, visibleSize, catSize, dictionaryLength;
@@ -18,7 +18,7 @@ public class RAECost implements DifferentiableFunction {
 			List<LabeledDatum<Integer,Integer>> DataCell, FloatMatrix FreqOrig, DifferentiableMatrixFunction f) {
 		
 		Computer = new RAECostComputer(CatSize, AlphaCat, Beta, DictionaryLength, hiddenSize, DataCell, FreqOrig, f);
-
+		evalCount = 0;
 		this.hiddenSize = hiddenSize;
 		this.visibleSize = visibleSize;
 		this.dictionaryLength = DictionaryLength;
@@ -30,6 +30,8 @@ public class RAECost implements DifferentiableFunction {
 		this.FTLambda = new double[]{ Lambda[0], Lambda[1], Lambda[2]};
 		DoubleArrays.scale(this.Lambda, AlphaCat);
 		DoubleArrays.scale(this.FTLambda, 1-AlphaCat);
+		
+		initPrevQuery();
 	}
 
 	@Override
@@ -40,6 +42,9 @@ public class RAECost implements DifferentiableFunction {
 
 	@Override
 	public double valueAt(double[] x) {
+		if(!requiresEvaluation(x))
+			return value;
+		
 		Theta Theta1 = new Theta(x,hiddenSize,visibleSize,dictionaryLength);
 		FineTunableTheta Theta2 = new FineTunableTheta(x,hiddenSize,visibleSize,catSize,dictionaryLength);
 		Theta2.setWe( Theta2.We.add(WeOrig) );
@@ -61,16 +66,7 @@ public class RAECost implements DifferentiableFunction {
 			System.err.println("Error while calculating graident : " + e.getMessage());
 			e.printStackTrace();
 		}
+		
 		return value;
 	}
-
-	@Override
-	public double[] derivativeAt(double[] x){
-		if( gradient == null )
-			valueAt(x);
-		double[] retGrad = gradient;
-		gradient = null;
-		return retGrad;
-	}
-
 }

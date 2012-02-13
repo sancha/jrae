@@ -6,7 +6,7 @@ import org.jblas.*;
 
 import util.*;
 
-public class SoftmaxCost implements DifferentiableFunction
+public class SoftmaxCost extends MemoizedDifferentiableFunction
 {
 	DoubleMatrix Features, Labels;
 	DifferentiableMatrixFunction Activation;
@@ -33,6 +33,7 @@ public class SoftmaxCost implements DifferentiableFunction
 		else
 			Activation = new Sigmoid();
 		Gradient = null;
+		initPrevQuery();
 	}
 	
 	public SoftmaxCost(DoubleMatrix Features ,DoubleMatrix Labels,double Lambda)
@@ -47,6 +48,7 @@ public class SoftmaxCost implements DifferentiableFunction
 		else
 			Activation = new Sigmoid();
 		Gradient = null;
+		initPrevQuery();
 	}
 	
 	@Override
@@ -58,6 +60,9 @@ public class SoftmaxCost implements DifferentiableFunction
 	@Override
 	public double valueAt(double[] x) 
 	{
+		if( !requiresEvaluation(x) )
+			return value;
+		
 		ClassifierTheta Theta = new ClassifierTheta(x,FeatureLength,CatSize);
 		
 		DoubleMatrix Sigmoid = Activation.valueAt(((Theta.W.transpose()).mmul(Features)).addColumnVector(Theta.b));
@@ -76,19 +81,10 @@ public class SoftmaxCost implements DifferentiableFunction
 	    //System.out.println(Delta.columnSums());
 	    
 	    Gradient = new ClassifierTheta(gradW,gradb);
+	    value = Cost + RegularisationTerm;
+	    gradient = Gradient.Theta;
 	    
 	    //System.out.println("SoftmaxCost : " + (Cost + RegularisationTerm));
-		return Cost + RegularisationTerm;
-	}
-
-	@Override
-	public double[] derivativeAt(double[] x) 
-	{
-		if(Gradient == null)
-			valueAt(x);
-			//System.err.println("Derivation query before value query");
-		double[] theta = Gradient.Theta;
-		Gradient = null;
-		return theta;
+		return value; 
 	}
 }

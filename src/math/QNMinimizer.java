@@ -915,7 +915,7 @@ public class QNMinimizer implements Minimizer<DifferentiableFunction> {
 				double newValue;
 				double[] newPoint = new double[3]; // initialized in loop
 				say("Iter " + its + " evals " + fevals + " ");
-
+				
 				// Compute the search direction
 				say("<");
 				computeDir(dir, grad, qn);
@@ -945,13 +945,11 @@ public class QNMinimizer implements Minimizer<DifferentiableFunction> {
 				// switch between line search options.
 				switch (lsOpt) {
 				case BACKTRACK:
-					newPoint = lineSearchBacktrack(dfunction, dir, x, newX,
-							grad, value);
+					newPoint = lineSearchBacktrack(dfunction, dir, x, newX, grad, value);
 					say("B");
 					break;
 				case MINPACK:
-					newPoint = lineSearchMinPack(dfunction, dir, x, newX, grad,
-							value, functionTolerance);
+					newPoint = lineSearchMinPack(dfunction, dir, x, newX, grad, value, functionTolerance);
 					say("M");
 					break;
 				default:
@@ -966,10 +964,8 @@ public class QNMinimizer implements Minimizer<DifferentiableFunction> {
 				say("] ");
 
 				// This shouldn't actually evaluate anything since that should
-				// have been
-				// done in the lineSearch.
-				System.arraycopy(dfunction.derivativeAt(newX), 0, newGrad, 0,
-						newGrad.length);
+				// have been done in the lineSearch.
+				System.arraycopy(dfunction.derivativeAt(newX), 0, newGrad, 0, newGrad.length);
 
 				// This is where all the s, y updates are applied.
 				qn.update(newX, x, newGrad, grad, newPoint[a]);
@@ -986,7 +982,7 @@ public class QNMinimizer implements Minimizer<DifferentiableFunction> {
 				// newX = temp;
 				System.arraycopy(newX, 0, x, 0, x.length);
 				System.arraycopy(newGrad, 0, grad, 0, newGrad.length);
-
+				
 				if (quiet) {
 					System.err.print(".");
 				}
@@ -1085,9 +1081,10 @@ public class QNMinimizer implements Minimizer<DifferentiableFunction> {
 
 	private double evaluateFunction(DifferentiableFunction dfunc, double[] x,
 			double[] grad) {
+		double cost = dfunc.valueAt(x);
 		System.arraycopy(dfunc.derivativeAt(x), 0, grad, 0, grad.length);
 		fevals += 1;
-		return dfunc.valueAt(x);
+		return cost;
 	}
 
 	/*
@@ -1128,9 +1125,8 @@ public class QNMinimizer implements Minimizer<DifferentiableFunction> {
 
 		double[] newPoint = new double[3];
 
-		while ((newPoint[f] = func
-				.valueAt((plusAndConstMult(x, dir, step, newX)))) > lastValue
-				+ c * step) {
+		while ((newPoint[f] = func.valueAt((plusAndConstMult(x, dir, step, newX)))) 
+										> lastValue + c * step) {
 			fevals += 1;
 			if (newPoint[f] < lastValue) {
 				// an improvement, but not good enough... suspicious!
@@ -1225,8 +1221,7 @@ public class QNMinimizer implements Minimizer<DifferentiableFunction> {
 				newPt[a] = bestPt[a];
 			}
 
-			newPt[f] = dfunc
-					.valueAt((plusAndConstMult(x, dir, newPt[a], newX)));
+			newPt[f] = dfunc.valueAt((plusAndConstMult(x, dir, newPt[a], newX)));
 			newPt[g] = ArrayMath.innerProduct(dfunc.derivativeAt(newX), dir);
 			double fTest = f0 + newPt[a] * gTest;
 			fevals += 1;

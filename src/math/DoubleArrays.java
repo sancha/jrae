@@ -140,6 +140,7 @@ public class DoubleArrays {
   public static void initialize(double[] x, double d) {
     Arrays.fill(x, d);
   }
+  
   public static void initialize(Object[] x, double d) {
     for (int i = 0; i < x.length; i++) {
       Object o = x[i];
@@ -148,6 +149,15 @@ public class DoubleArrays {
       else
         initialize((Object[]) o, d);
     }
+  }
+  
+  public static boolean equals(double[] x, double[] y){
+	if (x.length != y.length) throw new RuntimeException("diff lengths: " + x.length + " " + y.length);
+    boolean equal = true;
+	for (int i = 0; i < x.length && equal; i++) {
+    	equal = (x[i] == y[i]);
+    }
+    return equal;
   }
   
   public static double total(double[] x)
