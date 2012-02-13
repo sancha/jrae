@@ -23,7 +23,7 @@ import java.util.concurrent.*;
  */
 
 public class Parallel {
-	private static final int NUM_CORES = 1; //Runtime.getRuntime().availableProcessors();
+	private static final int NUM_CORES = Runtime.getRuntime().availableProcessors();
 	private static ExecutorService forPool = Executors.newFixedThreadPool(NUM_CORES);
 	
 	public static <T,F> void For(final Collection<T> pElements, final Operation<T> pOperation) {

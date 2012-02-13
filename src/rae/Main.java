@@ -26,7 +26,8 @@ public class Main {
 		RAECost RAECost = null;
 		// Set the parameters from argMap or use defaults;
 		String dir = "data/parsed/"; //ssanjeev
-		String SaveFile = "save1.dat";
+		String dumpDir = "results/";
+		String SaveFile = "rae.";
 		int K = 10,	MaxIterations = 80,	EmbeddingSize = 50, CatSize = 1; 
 		double AlphaCat = 0.2, Beta = 0.5;
 		boolean TrainModel = true;
@@ -61,7 +62,7 @@ public class Main {
 			Lambda[3] = Double.parseDouble( argMap.get("-lambdaLRAE") );
 		
 		if (argMap.containsKey("-Beta")) 
-			Beta = Integer.parseInt( argMap.get("-Beta") );
+			Beta = Double.parseDouble( argMap.get("-Beta") );
 
 		if (argMap.containsKey("-trainModel")) 
 			TrainModel = Boolean.parseBoolean( argMap.get("-trainModel") );		
@@ -85,7 +86,7 @@ public class Main {
 		int DictionarySize = Dataset.Vocab.size();
 		int hiddenSize = EmbeddingSize, visibleSize = EmbeddingSize;
 		
-		Minimizer<DifferentiableFunction> minFunc = new QNMinimizer(10,2); // MaxIterations);
+		
 
 		FineTunableTheta InitialTheta = new FineTunableTheta(EmbeddingSize,EmbeddingSize,CatSize,DictionarySize,true);
 		
@@ -103,6 +104,7 @@ public class Main {
 			{
 				RAECost = new RAECost(AlphaCat,CatSize,Beta,DictionarySize,hiddenSize,visibleSize,
 												Lambda,InitialTheta.We,trainingData,null,f);
+				Minimizer<DifferentiableFunction> minFunc = new QNMinimizer(10, MaxIterations);	
 				double[] minTheta = minFunc.minimize(RAECost, 1e-6, InitialTheta.Theta, MaxIterations);
 				tunedTheta = new FineTunableTheta(minTheta, hiddenSize,visibleSize, CatSize, DictionarySize);
 			}
@@ -120,7 +122,7 @@ public class Main {
 			
 			// Important step
 			tunedTheta.setWe(tunedTheta.We.add(InitialTheta.We));
-			tunedTheta.Dump(dir + "/" + SaveFile);
+			tunedTheta.Dump(dumpDir + "/" + SaveFile + "." + AlphaCat + "." + Beta + ".dat");
 			
 			System.out.println("Extracting features ...");
 	
