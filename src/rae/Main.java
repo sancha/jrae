@@ -86,17 +86,19 @@ public class Main {
 		int DictionarySize = Dataset.Vocab.size();
 		int hiddenSize = EmbeddingSize, visibleSize = EmbeddingSize;
 		
-		
 
-		FineTunableTheta InitialTheta = new FineTunableTheta(EmbeddingSize,EmbeddingSize,CatSize,DictionarySize,true);
+		FineTunableTheta InitialTheta = null;
 		
-		System.out.printf("%d\n%d\n%d\n%d\n",DictionarySize,hiddenSize,InitialTheta.Theta.length, InitialTheta.getThetaSize());
+		System.out.printf("%d\n%d\n",DictionarySize,hiddenSize);
 		
 		cv = new StratifiedCrossValidation<LabeledDatum<Integer,Integer>,Integer,Integer>(K, Dataset);
 		FineTunableTheta tunedTheta = null;
 
 		for (int foldNumber = 0; foldNumber < K; foldNumber++) 
 		{
+			long startTime = System.nanoTime();
+			InitialTheta = new FineTunableTheta(EmbeddingSize,EmbeddingSize,CatSize,DictionarySize,true);
+
 			List<LabeledDatum<Integer,Integer>> trainingData = cv.getTrainingData(foldNumber); //,numFolds);
 			List<LabeledDatum<Integer,Integer>> testData = cv.getValidationData(foldNumber);
 			
@@ -117,12 +119,13 @@ public class Main {
 				tunedTheta = (FineTunableTheta) ois.readObject();
 				ois.close();
 				
+				InitialTheta = new FineTunableTheta(EmbeddingSize,EmbeddingSize,CatSize,DictionarySize,true);
 				InitialTheta.setWe( DoubleMatrix.zeros(hiddenSize, DictionarySize) );
 			}
 			
 			// Important step
 			tunedTheta.setWe(tunedTheta.We.add(InitialTheta.We));
-			tunedTheta.Dump(dumpDir + "/" + SaveFile + "." + AlphaCat + "." + Beta + ".dat");
+			tunedTheta.Dump(dumpDir + "/" + SaveFile + AlphaCat + "." + Beta + ".dat");
 			
 			System.out.println("Extracting features ...");
 	
@@ -136,6 +139,9 @@ public class Main {
 			Accuracy TestAccuracy = classifier.test(classifierTestingData);
 			System.out.println( "Train Accuracy :" + TrainAccuracy.toString() );
 			System.out.println( "Test Accuracy :" + TestAccuracy.toString() );
+			long endTime = System.nanoTime();
+			long duration = endTime - startTime;
+			System.out.println( "Fold " + foldNumber + " took " + duration / (1000*1000) + "ms " );
 		}
 	}
 	
