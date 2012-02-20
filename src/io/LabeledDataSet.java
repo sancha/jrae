@@ -1,11 +1,11 @@
 package io;
 
 import java.util.*;
-
 import classify.LabeledDatum;
 
 public class LabeledDataSet<T extends LabeledDatum<F,L>,F,L> extends DataSet<T,F> {
 	
+	public List<T> TestData;
 	Map<L,Integer> labelSet;
 	final boolean builtWithLabelSet;
 	int labelCount;

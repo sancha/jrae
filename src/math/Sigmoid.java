@@ -16,11 +16,12 @@ public class Sigmoid extends DifferentiableMatrixFunction {
 	}
 
 	/**
-	 * @param M input double matrix
-	 * @return sigmoid_prime = M.*(1-M);
+	 * @param X input double matrix
+	 * @return sigmoid_prime = M.*(1-M), where M = sigmoid(X);
 	 */
 	@Override
-	public DoubleMatrix derivativeAt(DoubleMatrix M) {
+	public DoubleMatrix derivativeAt(DoubleMatrix X) {
+		DoubleMatrix M = valueAt(X);
 		return M.mul( (M.mul(-1)).addi(1) );
 	}
 	

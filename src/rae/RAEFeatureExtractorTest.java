@@ -13,12 +13,6 @@ import org.junit.Test;
 
 import classify.ReviewDatum;
 
-
-/**
- * TODO Fix this also!
- * @author ssanjeev
- */
-
 public class RAEFeatureExtractorTest {
 
 	RAEFeatureExtractor FeatureExtractor;

@@ -30,7 +30,6 @@ public class SoftmaxClassifier<F,L> implements ProbabilisticClassifier<F,L>{
 	{
 		LabelSet = new Counter<L>();
 		SigmoidCalc = new Sigmoid();
-		//minFunc = new LBFGSMinimizer(MaxIterations);
 		minFunc = new QNMinimizer(10,MaxIterations);
 	}
 	
@@ -83,6 +82,7 @@ public class SoftmaxClassifier<F,L> implements ProbabilisticClassifier<F,L>{
 				LabelSet.setCount(label, CatSize++);
 		}
 		CatSize -= 1;
+		System.out.println(CatSize);
 	}
 	
 	private int[] makeLabelVector(List<LabeledDatum<F,L>> Data)

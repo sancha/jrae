@@ -67,15 +67,12 @@ public class RAEPropagation {
 			DoubleMatrix C1 = WordsEmbedded.getColumns(ArraysHelper.makeArray(0, NumComponents - 2));
 			DoubleMatrix C2 = WordsEmbedded.getColumns(ArraysHelper.makeArray(1, NumComponents - 1));
 
-			// FloatMatrix Freq1 = Freq.getColumns( makeArray(0,NumComponents-2)
-			// );
-			// FloatMatrix Freq2 = Freq.getColumns( makeArray(1,NumComponents-1)
-			// );
+			// FloatMatrix Freq1 = Freq.getColumns( makeArray(0,NumComponents-2));
+			// FloatMatrix Freq2 = Freq.getColumns( makeArray(1,NumComponents-1));
 
-			DoubleMatrix ActivationInp = (theta.W1.mmul(C1)).add(theta.W2
-					.mmul(C2)); // W1*c1 + W2*c2
-			DoubleMatrix P = f
-					.valueAt(ActivationInp.addiColumnVector(theta.b1));
+			// W1*c1 + W2*c2
+			DoubleMatrix ActivationInp = (theta.W1.mmul(C1)).add(theta.W2.mmul(C2)); 
+			DoubleMatrix P = f.valueAt(ActivationInp.addiColumnVector(theta.b1));
 
 			/** Internal representation **/
 			DoubleMatrix PNorm = DoubleMatrixFunctions.ColumnWiseNormalize(P);
@@ -85,10 +82,8 @@ public class RAEPropagation {
 			 * uniform and can be understood that the variable without "norm"
 			 * suffixed to their names may be unnormalized
 			 **/
-			DoubleMatrix Y1 = f.valueAt((theta.W3.mmul(PNorm))
-									.addColumnVector(theta.b2));
-			DoubleMatrix Y2 = f.valueAt((theta.W4.mmul(PNorm))
-									.addColumnVector(theta.b3));
+			DoubleMatrix Y1 = f.valueAt((theta.W3.mmul(PNorm)).addColumnVector(theta.b2));
+			DoubleMatrix Y2 = f.valueAt((theta.W4.mmul(PNorm)).addColumnVector(theta.b3));
 
 			/** Reconstruction of C1 and C2 **/
 			DoubleMatrix Y1Norm = DoubleMatrixFunctions.ColumnWiseNormalize(Y1);
@@ -118,10 +113,10 @@ public class RAEPropagation {
 			Node NewParent = tree.T[SentenceLength + j];
 			NewParent.Y1C1 = Y1C1.getColumn(J_minpos);
 			NewParent.Y2C2 = Y2C2.getColumn(J_minpos);
-			NewParent.DeltaOut1 = f.derivativeAt(Y1.getColumn(J_minpos)).mmul(
-					Y1C1.getColumn(J_minpos));
-			NewParent.DeltaOut2 = f.derivativeAt(Y2.getColumn(J_minpos)).mmul(
-					Y2C2.getColumn(J_minpos));
+			NewParent.DeltaOut1 = f.derivativeAt(Y1.getColumn(J_minpos))
+					.mmul(Y1C1.getColumn(J_minpos));
+			NewParent.DeltaOut2 = f.derivativeAt(Y2.getColumn(J_minpos))
+					.mmul(Y2C2.getColumn(J_minpos));
 			NewParent.Features = PNorm.getColumn(J_minpos);
 			NewParent.UnnormalizedFeatures = P.getColumn(J_minpos);
 			NewParent.score = J_min;
@@ -178,12 +173,12 @@ public class RAEPropagation {
 
 		// classifier on single words
 		Sigmoid SigmoidCalc = new Sigmoid();
-		DoubleMatrix SM = SigmoidCalc.valueAt((theta.Wcat.mmul(WordsEmbedded)
-				.addColumnVector(theta.bcat)));
+		DoubleMatrix Input = theta.Wcat.mmul(WordsEmbedded).addColumnVector(theta.bcat);
+		DoubleMatrix SM = SigmoidCalc.valueAt(Input);
 		DoubleMatrix Diff = SM.sub(CurrentLabel);
 		DoubleMatrix SquaredError = (Diff.mul(Diff)).mul((1 - AlphaCat) * 0.5f);
 		DoubleMatrix ErrorGradient = Diff.mul(1 - AlphaCat).mul(
-				SigmoidCalc.derivativeAt(SM));
+											SigmoidCalc.derivativeAt(Input));
 
 		for (int i = 0; i < TreeSize; i++) {
 			Node CurrentNode = tree.T[i];
@@ -213,11 +208,11 @@ public class RAEPropagation {
 				CurrentNode.Features = pNorm1;
 
 				// Eq. (7) in the paper (for special case of 1d label)
-				SM = SigmoidCalc.valueAt((theta.Wcat.mmul(pNorm1))
-												.addColumnVector(theta.bcat));
+				Input = (theta.Wcat.mmul(pNorm1)).addColumnVector(theta.bcat);
+				SM = SigmoidCalc.valueAt(Input);
 				Diff = SM.sub(CurrentLabel);
 				CurrentNode.catDelta = (Diff.mul(Beta * (1 - AlphaCat)))
-												.mul(SigmoidCalc.derivativeAt(SM));
+												.mul(SigmoidCalc.derivativeAt(Input));
 				CurrentNode.score = DoubleMatrixFunctions.SquaredNorm(Diff)
 												* 0.5 * Beta * (1 - AlphaCat);
 

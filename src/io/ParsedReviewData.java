@@ -2,7 +2,7 @@ package io;
 
 import java.io.*;
 import java.util.*;
-
+import classify.Datum;
 import classify.LabeledDatum;
 import classify.ReviewDatum;
 
@@ -14,13 +14,14 @@ import classify.ReviewDatum;
  */
 public class ParsedReviewData extends LabeledDataSet<LabeledDatum<Integer,Integer>,Integer,Integer>
 { 
-	private int NumExamples, counter;
+	private int NumExamples, NumTestExamples, counter, testCounter;
 	private int[] Sentence_lengths;
 	private Map<String,Integer> WordsIndexer;
 	
 	public ParsedReviewData()
 	{
 		counter = 0;
+		testCounter = 0;
 		WordsIndexer = new HashMap<String, Integer>();
 	}
 	
@@ -39,28 +40,38 @@ public class ParsedReviewData extends LabeledDataSet<LabeledDatum<Integer,Intege
 		String[] files = Dir.list( );
 		
 		NumExamples = 0;
+		NumTestExamples = 0;
 		for(String fileName : files )
 		{
 			String FullFileName = (new File(Dir,fileName)).getAbsolutePath();
-			if( new File(Dir,fileName).isFile() && FullFileName.endsWith(".txt") )
-				NumExamples += IOUtils.countLines(FullFileName);
+			if(isFile(FullFileName))
+				if(isTestDataFile(FullFileName))
+					NumTestExamples += IOUtils.countLines(FullFileName);
+				else
+					NumExamples += IOUtils.countLines(FullFileName);
 		}
 		
-		System.out.println("ProcessData : " + NumExamples);
+		System.out.println("ProcessData : " + NumExamples + " " + NumTestExamples);
 		
 		Sentence_lengths = new int[ NumExamples ];
 		Data = new ArrayList<LabeledDatum<Integer,Integer>>( NumExamples );
+		TestData = new ArrayList<LabeledDatum<Integer,Integer>>( NumTestExamples );
 		
 		int CurrentLabel = 0;
 		Arrays.sort(files);
 		for(String fileName : files )
 		{
 			String FullFileName = (new File(Dir,fileName)).getAbsolutePath();
-			if( !(new File(Dir,fileName).isFile()) || !FullFileName.endsWith(".txt") )
-				continue;
-			LoadFile(FullFileName,CurrentLabel);
-			labelSet.put(CurrentLabel,CurrentLabel);
-			CurrentLabel++;
+			if (isTestDataFile(FullFileName))
+			{
+				LoadFile(FullFileName,ReviewDatum.UnknownLabel);
+			}
+			else if (isFile(FullFileName))
+			{
+				LoadFile(FullFileName,CurrentLabel);
+				labelSet.put(CurrentLabel,CurrentLabel);
+				CurrentLabel++;
+			}
 		}
 		
 		EmbedWords();
@@ -76,10 +87,16 @@ public class ParsedReviewData extends LabeledDataSet<LabeledDatum<Integer,Intege
 			String sWords[] = sLine.split(" ");
 			if (sWords == null || sWords.length == 0)
 				continue;
-			Data.add( new ReviewDatum(sLine, Label, counter) );
-			Vocab.addAll( Arrays.asList(sWords) );
-			Sentence_lengths[counter] = sWords.length;
-			counter++;
+			if(Label != ReviewDatum.UnknownLabel){ // Test data
+				Data.add( new ReviewDatum(sLine, Label, counter) );
+				Vocab.addAll( Arrays.asList(sWords) );
+				Sentence_lengths[counter] = sWords.length;
+				counter++;
+			}
+			else{
+				TestData.add( new ReviewDatum(sLine, Label, testCounter) );
+				testCounter++;
+			}
 			iCountLines++;
 		}
 		inBr.close();
@@ -88,7 +105,7 @@ public class ParsedReviewData extends LabeledDataSet<LabeledDatum<Integer,Intege
 	
 	protected void EmbedWords()
 	{
-		// Populate WordsIndex, then use it to embed words
+		Vocab.add(DataSet.UNK);
 		System.out.println("There are a total of "+Vocab.size()+" words in Vocab");
 		
 		// Iterate through Vocab to set up WordsIndex
@@ -99,11 +116,22 @@ public class ParsedReviewData extends LabeledDataSet<LabeledDatum<Integer,Intege
 			WordsIndexer.put(s, i);
 			i++;
 		}
-		WordsIndexer.put(DataSet.UNK, i);
 		
 		// Update Words_Index
 		for (LabeledDatum<Integer,Integer> DataItem : Data) 
 			((ReviewDatum)DataItem).indexWords(WordsIndexer);
+
+		for (Datum<Integer> DataItem : TestData) 
+			((ReviewDatum)DataItem).indexWords(WordsIndexer);
+	}
+	
+	protected boolean isFile(String fileName){
+		return (new File(fileName).isFile() && fileName.endsWith(".txt"));
+	}
+	
+	protected boolean isTestDataFile(String fileName){
+		String baseName = new File(fileName).getName();
+		return fileName.endsWith(".txt") && baseName.indexOf("test") == 0;
 	}
 	
 	public int getWordIndex(String Word)

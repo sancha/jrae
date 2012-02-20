@@ -4,20 +4,17 @@ import java.io.*;
 import org.jblas.*;
 
 /**
- * MUST be serializable. This is what we are learning. We need to be able to save and
- * restore learnt paramters. Make sure serializability is properly implemented and tested.
- * 
  * These classes are made only of the constructors.
  * When either constructor is called, all members are initialized and populated
- * 
- *  Check the DoubleMatrix api, there may be options to unroll the matrices into vectors also.
  */
 public class Theta implements Serializable{
 	
-	DoubleMatrix W1, W2, W3, W4, We;
+	DoubleMatrix W1, W2, W3, W4;
 	DoubleMatrix b1, b2, b3;
 	
-	double[] Theta;
+	//TODO Remove public visibility
+	public double[] Theta;
+	public DoubleMatrix We;
 	
 	protected double r1, r2;
 

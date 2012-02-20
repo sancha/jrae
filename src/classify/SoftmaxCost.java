@@ -65,14 +65,15 @@ public class SoftmaxCost extends MemoizedDifferentiableFunction
 		
 		ClassifierTheta Theta = new ClassifierTheta(x,FeatureLength,CatSize);
 		
-		DoubleMatrix Sigmoid = Activation.valueAt(((Theta.W.transpose()).mmul(Features)).addColumnVector(Theta.b));
+		DoubleMatrix Input = ((Theta.W.transpose()).mmul(Features)).addColumnVector(Theta.b);
+		DoubleMatrix Sigmoid = Activation.valueAt(Input);
 		DoubleMatrix Diff = Sigmoid.sub(Labels.transpose());
 		
 		double MeanTerm = 1.0/ Features.columns;
 		double Cost = 0.5 * DoubleMatrixFunctions.SquaredNorm(Diff) * MeanTerm; 
 		double RegularisationTerm = 0.5 * Lambda * DoubleMatrixFunctions.SquaredNorm(Theta.W);
 		
-	    DoubleMatrix Delta = Diff.mul( Activation.derivativeAt(Sigmoid) );
+	    DoubleMatrix Delta = Diff.mul( Activation.derivativeAt(Input) );
 	    
 	    DoubleMatrix gradW = ((Delta.mmul( Features.transpose() )).mul(MeanTerm)).transpose();
 	    gradW = gradW.addi(Theta.W.mul(Lambda));

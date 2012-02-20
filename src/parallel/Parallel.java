@@ -24,9 +24,16 @@ import java.util.concurrent.*;
 
 public class Parallel {
 	private static final int NUM_CORES = Runtime.getRuntime().availableProcessors();
-	private static ExecutorService forPool = Executors.newFixedThreadPool(NUM_CORES);
+	private static ExecutorService forPool;
+	private static int poolSize = NUM_CORES; 
+	
+	public static void setPoolSize(int poolSize)
+	{
+		Parallel.poolSize = poolSize;
+	}
 	
 	public static <T,F> void For(final Collection<T> pElements, final Operation<T> pOperation) {
+		forPool = Executors.newFixedThreadPool(poolSize);
 		
 		List<Future<?>> futures = new LinkedList<Future<?>>();
 		List<Pair<Integer,T>> indexedElements = new ArrayList<Pair<Integer,T>>(pElements.size());
@@ -67,6 +74,7 @@ public class Parallel {
 				System.err.println(e.getMessage());
 			}
 		}
+		forPool.shutdown();
 	}
 	
 	public void shutdown()

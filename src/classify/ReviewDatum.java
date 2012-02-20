@@ -1,8 +1,12 @@
 package classify;
 
+import io.DataSet;
+
 import java.util.*;
 
 public class ReviewDatum implements LabeledDatum<Integer,Integer> {
+	public static final int UnknownLabel = -1;
+	
 	private String ReviewStr;
 	private int[] Indices;
 	private int Label, Index;
@@ -27,9 +31,11 @@ public class ReviewDatum implements LabeledDatum<Integer,Integer> {
 		String[] parts = ReviewStr.split(" ");
 		Indices = new int[ parts.length ];
 		for(int i=0; i<parts.length; i++)
-			Indices[i] = WordsIndexer.get(parts[i]);
+			if (WordsIndexer.containsKey(parts[i]))
+				Indices[i] = WordsIndexer.get(parts[i]);
+			else
+				Indices[i] = WordsIndexer.get(DataSet.UNK);
 	}
-	
 	
 	@Override
 	public Collection<Integer> getFeatures() 

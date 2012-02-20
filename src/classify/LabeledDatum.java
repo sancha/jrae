@@ -6,4 +6,5 @@ package classify;
  */
 public interface LabeledDatum<F,L> extends Datum<F> {
   L getLabel();
+  
 }
