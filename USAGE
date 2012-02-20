@@ -1,4 +1,4 @@
-All the classes in the package main support these parameters. 
+Refer run.sh for sample usage.
 
 -DataDir DIR
 	Use all txt files in DIR as data. The data files are organized such that 
@@ -22,7 +22,11 @@ All the classes in the package main support these parameters.
 	This parameter is used only if not training. When not training, one of
 	FeaturesOutputFile or ProbabilitiesOutputFile is compulsory. The system
 	extracts features for the test data using the Model and saves it in FILE  
-		
+	
+	FILE should either not be a txt file or it should not point to the
+	same directory as the -DataDir option, because it will cause issues,
+	the next time the data is processed.
+
 -ProbabilitiesOutputFile FILE
 	This parameter is used only if not training. When not training, one of
 	FeaturesOutputFile or ProbabilitiesOutputFile is compulsory. The system
@@ -32,7 +36,11 @@ All the classes in the package main support these parameters.
 	alphabetical ordering of files in the -DataDir option. This will be 
 	fixed in the next commit to list the labels themselves instead of the 
 	label index. 
-			
+		
+	FILE should either not be a txt file or it should not point to the
+	same directory as the -DataDir option, because it will cause issues,
+	the next time the data is processed.
+		
 -NumCores NUMCORES
 	Indicates how many parallel threads to use for feature processing. 
 	Ideally it is the same as the number of cores on the machine but never
@@ -87,3 +95,4 @@ All the classes in the package main support these parameters.
 
 --help
 	Print this message and quit.
+

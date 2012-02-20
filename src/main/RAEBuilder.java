@@ -70,13 +70,16 @@ public class RAEBuilder {
 					Collection<Double> features = data.getFeatures();
 					for(Double f : features)
 						out.printf("%.8f ", f.doubleValue());
+					out.println();
 				}
+				out.close();
 			}
 			
 			Accuracy TrainAccuracy = classifier.train(classifierTrainingData);
 			System.out.println( "Train Accuracy :" + TrainAccuracy.toString() );
 			
-			if (params.ProbabilitiesOutputFile != null){
+			if (params.ProbabilitiesOutputFile != null)
+			{
 				PrintStream out = new PrintStream(params.ProbabilitiesOutputFile);
 				for(LabeledDatum<Double, Integer> data : classifierTestingData)
 				{
@@ -84,7 +87,9 @@ public class RAEBuilder {
 					Counter<Integer> prob = classifier.getProbabilities(data);
 					for(Integer l : prob.keySet() )
 		        		out.printf("%d : %.3f, ", l.intValue(), prob.getCount(l));
+					out.println();
 				}
+				out.close();		
 			}
 		}
 	}
