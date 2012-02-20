@@ -17,12 +17,14 @@ public class ParsedReviewData extends LabeledDataSet<LabeledDatum<Integer,Intege
 	private int NumExamples, NumTestExamples, counter, testCounter;
 	private int[] Sentence_lengths;
 	private Map<String,Integer> WordsIndexer;
+	private Map<Integer,String> SecretLabelMapping;
 	
 	public ParsedReviewData()
 	{
 		counter = 0;
 		testCounter = 0;
 		WordsIndexer = new HashMap<String, Integer>();
+		SecretLabelMapping = new HashMap<Integer, String>();
 	}
 	
 	/**
@@ -70,6 +72,7 @@ public class ParsedReviewData extends LabeledDataSet<LabeledDatum<Integer,Intege
 			{
 				LoadFile(FullFileName,CurrentLabel);
 				labelSet.put(CurrentLabel,CurrentLabel);
+				SecretLabelMapping.put(CurrentLabel,fileName);
 				CurrentLabel++;
 			}
 		}
@@ -132,6 +135,11 @@ public class ParsedReviewData extends LabeledDataSet<LabeledDatum<Integer,Intege
 	protected boolean isTestDataFile(String fileName){
 		String baseName = new File(fileName).getName();
 		return fileName.endsWith(".txt") && baseName.indexOf("test") == 0;
+	}
+	
+	public String getLabelString (int label)
+	{
+		return SecretLabelMapping.get(label);
 	}
 	
 	public int getWordIndex(String Word)

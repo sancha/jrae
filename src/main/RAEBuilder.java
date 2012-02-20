@@ -3,7 +3,10 @@ package main;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.PrintStream;
+import java.util.Collection;
 import java.util.List;
+import util.Counter;
 
 import math.DifferentiableFunction;
 import math.DifferentiableMatrixFunction;
@@ -59,11 +62,30 @@ public class RAEBuilder {
 			classifierTrainingData = FullRun.getFeatures(fe, params.Dataset.Data);
 			classifierTestingData = FullRun.getFeatures(fe, params.Dataset.TestData);
 			
+			if (params.featuresOutputFile != null)
+			{
+				PrintStream out = new PrintStream(params.featuresOutputFile);
+				for(LabeledDatum<Double, Integer> data : classifierTestingData)
+				{
+					Collection<Double> features = data.getFeatures();
+					for(Double f : features)
+						out.printf("%.8f ", f.doubleValue());
+				}
+			}
+			
 			Accuracy TrainAccuracy = classifier.train(classifierTrainingData);
 			System.out.println( "Train Accuracy :" + TrainAccuracy.toString() );
 			
-			Accuracy TestAccuracy = classifier.test(classifierTestingData);
-			System.out.println( "Test Accuracy :" + TestAccuracy.toString() );
+			if (params.ProbabilitiesOutputFile != null){
+				PrintStream out = new PrintStream(params.ProbabilitiesOutputFile);
+				for(LabeledDatum<Double, Integer> data : classifierTestingData)
+				{
+					//params.Dataset.getLabelString(l.intValue())
+					Counter<Integer> prob = classifier.getProbabilities(data);
+					for(Integer l : prob.keySet() )
+		        		out.printf("%d : %.3f, ", l.intValue(), prob.getCount(l));
+				}
+			}
 		}
 	}
 	

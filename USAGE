@@ -1,0 +1,89 @@
+All the classes in the package main support these parameters. 
+
+-DataDir DIR
+	Use all txt files in DIR as data. The data files are organized such that 
+	all instances corresponding to one class are listed in a single file 
+	named with its label. Each line in the text file is treated as a
+	single data instance. Put all unlabeled / test data in a file whose 
+	name starts with "test". For a reference, check "data/movie" directory
+	to see how the movie review data is organized.
+
+-TrainModel TRUE|FALSE
+	Indicates whether to train an RAE based on the data provided by the DIR
+	directive. 
+			
+-ModelFile FILE
+	This parameter is compulsory. FILE indicates the file into which the 
+	trained RAE model is saved if TRAINMODEL is set to TRUE. If not, it 
+	indicates the model file to be loaded to perform testing or feature 
+	extraction.
+	
+-FeaturesOutputFile FILE
+	This parameter is used only if not training. When not training, one of
+	FeaturesOutputFile or ProbabilitiesOutputFile is compulsory. The system
+	extracts features for the test data using the Model and saves it in FILE  
+		
+-ProbabilitiesOutputFile FILE
+	This parameter is used only if not training. When not training, one of
+	FeaturesOutputFile or ProbabilitiesOutputFile is compulsory. The system
+	classifies the test instances and saves the probabilities of the item 
+	belonging to each class into FILE. The classes are numbered 0 to K-1, 
+	and indicates a class label. The ordering of the class labels is the
+	alphabetical ordering of files in the -DataDir option. This will be 
+	fixed in the next commit to list the labels themselves instead of the 
+	label index. 
+			
+-NumCores NUMCORES
+	Indicates how many parallel threads to use for feature processing. 
+	Ideally it is the same as the number of cores on the machine but never
+	more. If this field is not set, it automatically sets this value to
+	the number of cores on the processor.
+
+-NumFolds NUMFOLDS
+	While doing a full demo run, indicates the number of folds to split 
+	the data into. Ignored by all other interfaces.
+
+-MaxIterations MAXITERATIONS
+	The number of iterations for training the RAE. The default is 80.
+			
+-embeddingSize EMBEDDINGSIZE
+	The RAE performs feature extraction by first embedding each word in
+	the vocabulary into a high dimensional real space. Defaults to 50. 
+	Higher values may result in severly increasing the training time.
+
+-alphaCat ALPHA
+	ALPHA is in [0,1] which indicates the balance between optimizing for
+	classification loss against auto-encoder loss. In detail : feature 
+	learning is performed by minimizing the reconstruction error. It is
+	also possible to minimize for a classification loss which is indicates
+	of how informative a single word is of the final class the sentence
+	belongs to. Defaults to 0.2.
+
+	For example, a word like "awesome" is highly indicative of a good 
+	review. If your corpus is full of such words, increase the value of
+	this parameter.
+			
+-Beta BETA
+	BETA is in [0,1] and indicates the weight on the classification loss.
+	Defaults to 0.5.
+			
+-lambdaW LAMBDAW
+	All lambda are weights on the regularization terms. LambdaW is the weight
+	on the embedding W1 - W4 (Refer the paper for more details)
+			
+-lambdaL LAMBDAL
+	All lambda are weights on the regularization terms. LAMBDAL is the weight
+	on the embedding We (Refer the paper for more details)
+			
+-lambdaCat
+	All lambda are weights on the regularization terms. LAMBDACAT is the weight
+	on the classifier weights.
+
+-lambdaRAE
+	All lambda are weights on the regularization terms. LAMBDARAE is the weight
+	on the classifier weights. This differs from LAMBDACAT in that this is applied
+	in the second phase where the RAE is being fine-tuned (Refer the paper for more
+	details)
+
+--help
+	Print this message and quit.
