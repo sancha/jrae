@@ -1,3 +1,5 @@
+#Java Recursive Autoencoder
+
 jrae is a re-implemented a semi-supervised recursive autoencoder in java. 
 This package also contains code to demonstrate its usage.  
 
@@ -15,15 +17,13 @@ The package includes a demo of movie review classification on which the
 algorithm attains state-of-art results.
 
 Downloading
------------
 
 The Recursive Autoencoder code is being maintained on github and can be 
 downloaded at
 
-  https://github.com/sancha/Recursive-Auto-encoder 
+  https://github.com/sancha/jrae 
 
-Dependencies
---------------
+#Dependencies
 
 The RAE package requires the jblas package for supporting the linear algebra 
 operations. These requirements are included in the lib directory.
@@ -38,7 +38,11 @@ LAPACK or ATLAS. Check out https://github.com/mikiobraun/jblas if you run
 into trouble. If you are running ubuntu, do `sudo apt-get install 
 libgfortran3`.
 
-BUGS
-----
+#BUGS
 
-If you encounter any bugs, please report it on github. 
+If you encounter any bugs, please report it on github.
+
+* Author: Sanjeev Satheesh <ssanjeev@stanford.edu>
+* Created: 2012 February 20
+* Keywords: java, sentiment analysis, machine learning, nlp 
+* URL: <http://github.com/sancha/jrae>
