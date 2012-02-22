@@ -1,6 +1,6 @@
 #Java Recursive Autoencoder
 
-jrae is a re-implemented a semi-supervised recursive autoencoder in java. This package also contains code to demonstrate its usage.  
+jrae is a re-implemention of semi-supervised recursive autoencoder in java. This package also contains code to demonstrate its usage.  
 
 More details are available at 
 
