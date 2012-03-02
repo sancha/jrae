@@ -44,6 +44,7 @@ public class Parallel {
 			indexedElements.add( new Pair<Integer,T>(index,element) );
 			index++;
 		}
+		int size = indexedElements.size();
 		
 		for (final Pair<Integer,T> element : indexedElements) {
 			try{
@@ -69,7 +70,7 @@ public class Parallel {
 				f.get();
 				numComplete++;
 				if (numComplete % 1000 == 0)
-					System.out.printf ("PARALLEL FOR : %d units processed\n", numComplete);
+					System.out.printf ("PARALLEL FOR : %d of %d units processed\n", numComplete, size);
 			} catch (InterruptedException e) {
 				System.err.println(e.getMessage());
 			} catch (ExecutionException e) {

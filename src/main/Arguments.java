@@ -73,6 +73,7 @@ public class Arguments {
 			ProbabilitiesOutputFile = argMap.get("-ProbabilitiesOutputFile");
 		
 		if(!TrainModel && (ProbabilitiesOutputFile == null && featuresOutputFile == null)){
+			System.err.println ("Please specify your output if you are not training.");
 			exitOnReturn = true;
 			printUsage();
 			return;
