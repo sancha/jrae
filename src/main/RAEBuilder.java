@@ -46,11 +46,13 @@ public class RAEBuilder {
 		System.out.printf("%d\n%d\n",params.DictionarySize,params.hiddenSize);
 		
 		if( params.TrainModel ){
+			System.out.println("Training the RAE. Model file will be saved in " + params.ModelFile);
 			FineTunableTheta tunedTheta = rae.train(params);
 			tunedTheta.Dump(params.ModelFile);
 			System.out.println("RAE trained. The model file is saved in " + params.ModelFile);
 		}
 		else{
+			System.out.println("Using the trained RAE. Model file retrieved from " + params.ModelFile);
 			List<LabeledDatum<Double,Integer>>  classifierTrainingData = null,
 												classifierTestingData = null;
 			
@@ -59,8 +61,8 @@ public class RAEBuilder {
 			
 			RAEFeatureExtractor fe = new RAEFeatureExtractor(params.EmbeddingSize, tunedTheta, 
 					params.AlphaCat, params.Beta, params.CatSize, params.Dataset.Vocab.size(), rae.f);
-			classifierTrainingData = FullRun.getFeatures(fe, params.Dataset.Data);
-			classifierTestingData = FullRun.getFeatures(fe, params.Dataset.TestData);
+			classifierTrainingData = fe.extractFeaturesIntoArray(params.Dataset.Data);
+			classifierTestingData = fe.extractFeaturesIntoArray(params.Dataset.TestData);
 			
 			if (params.featuresOutputFile != null)
 			{

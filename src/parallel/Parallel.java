@@ -63,9 +63,13 @@ public class Parallel {
 			
 		}
 
+		int numComplete = 0;
 		for (Future<?> f : futures) {
 			try {
 				f.get();
+				numComplete++;
+				if (numComplete % 1000 == 0)
+					System.out.printf ("PARALLEL FOR : %d units processed\n", numComplete);
 			} catch (InterruptedException e) {
 				System.err.println(e.getMessage());
 			} catch (ExecutionException e) {

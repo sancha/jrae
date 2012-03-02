@@ -24,6 +24,27 @@ public class RAEFeatureExtractor {
 		lock = new ReentrantLock();
 	}
 	
+	public List<LabeledDatum<Double,Integer>> 
+	extractFeaturesIntoArray(List<LabeledDatum<Integer,Integer>> Data)
+	{	
+		int numExamples = Data.size();
+		final LabeledDatum<Double,Integer>[] DataFeatures = new ReviewFeatures[numExamples]; 
+		
+		Parallel.For(Data, new Parallel.Operation<LabeledDatum<Integer,Integer>>(){
+			@Override
+			public void perform(int index, LabeledDatum<Integer, Integer> Datum) {
+				double[] feature = extractFeatures(Datum);
+				lock.lock();
+				{
+					ReviewFeatures r = new ReviewFeatures(Datum.toString(), Datum.getLabel(), index, feature);
+					DataFeatures[index] = r;
+				}
+				lock.unlock();
+			}
+		});	
+		return Arrays.asList(DataFeatures);
+	}
+	
 	public DoubleMatrix extractFeatures(List<LabeledDatum<Integer,Integer>> Data)
 	{
 		int numExamples = Data.size();
@@ -54,16 +75,7 @@ public class RAEFeatureExtractor {
 		double[] feature = new double[ HiddenSize * 2 ];
 		
 		int[] wordIndices = ArraysHelper.getIntArray( data.getFeatures() );
-		
-//		int min = 1000000, max = -1;
-//		for (int i=0; i<wordIndices.length; i++)
-//		{
-//			min = Math.min(wordIndices[i], min);
-//			max = Math.max(wordIndices[i], max);
-//		}
-//		//if(min < 0 || max > Theta.We.columns)
-//			System.err.println(Theta.We.columns + " " + min + " " + max);
-		
+				
 		DoubleMatrix WordsEmbedded = Theta.We.getColumns(wordIndices);
 		int CurrentLabel = data.getLabel();
 		

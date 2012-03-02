@@ -101,7 +101,7 @@ public class Arguments {
 		hiddenSize = EmbeddingSize;
 		visibleSize = EmbeddingSize;
 
-		System.out.println("CatSize : " + CatSize + "\n" + "DictionarySize : "
+		System.out.println("CatSize : " + Dataset.getCatSize() + "\n" + "DictionarySize : "
 				+ DictionarySize);
 
 	}

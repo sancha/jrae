@@ -77,9 +77,11 @@ public class FullRun {
 			System.out.println("Extracting features ...");
 	
 			FeatureExtractor = new RAEFeatureExtractor(params.EmbeddingSize, tunedTheta, 
-									params.AlphaCat, params.Beta, params.CatSize, params.DictionarySize, f);
-			List<LabeledDatum<Double,Integer>> classifierTrainingData = getFeatures(FeatureExtractor, trainingData);
-			List<LabeledDatum<Double,Integer>> classifierTestingData = getFeatures(FeatureExtractor, testData);
+								params.AlphaCat, params.Beta, params.CatSize, params.DictionarySize, f);
+			List<LabeledDatum<Double,Integer>> classifierTrainingData = 
+								FeatureExtractor.extractFeaturesIntoArray(trainingData);
+			List<LabeledDatum<Double,Integer>> classifierTestingData = 
+								FeatureExtractor.extractFeaturesIntoArray(testData);
 			
 			SoftmaxClassifier<Double,Integer> classifier = new SoftmaxClassifier<Double,Integer>( );
 
@@ -91,20 +93,6 @@ public class FullRun {
 			long duration = endTime - startTime;
 			System.out.println( "Fold " + foldNumber + " took " + duration / (1000*1000) + "ms " );
 		}
-	}
-	
-	public static List<LabeledDatum<Double,Integer>> 
-			getFeatures(RAEFeatureExtractor FeatureExtractor, List<LabeledDatum<Integer,Integer>> Data)
-	{
-		int dataItem = 0;
-		List<LabeledDatum<Double,Integer>> DataFeatures = new ArrayList<LabeledDatum<Double,Integer>>( Data.size() );
-		for(LabeledDatum<Integer,Integer> Datum : Data)
-		{
-			double[] feature = FeatureExtractor.extractFeatures(Datum);
-			DataFeatures.add( new ReviewFeatures(Datum.toString(), Datum.getLabel(), dataItem, feature) );
-			dataItem++;
-		}
-		return DataFeatures;
 	}
 	
 	public static DoubleMatrix ReadMatrix(String file, String var) throws IOException
