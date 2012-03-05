@@ -28,10 +28,7 @@ public class SoftmaxCost extends MemoizedDifferentiableFunction
 		this.Lambda = Lambda;
 		this.CatSize = CatSize;
 		this.FeatureLength = Features.rows;
-		if( CatSize > 1 )
-			Activation = new Softmax();
-		else
-			Activation = new Sigmoid();
+		Activation = CatSize > 1 ? new Softmax() :new Sigmoid();
 		Gradient = null;
 		initPrevQuery();
 	}
@@ -43,10 +40,7 @@ public class SoftmaxCost extends MemoizedDifferentiableFunction
 		this.Labels = Labels;
 		this.CatSize = Features.columns;
 		this.FeatureLength = Features.rows;
-		if( CatSize > 1 )
-			Activation = new Softmax();
-		else
-			Activation = new Sigmoid();
+		Activation = CatSize > 1 ? new Softmax() :new Sigmoid();
 		Gradient = null;
 		initPrevQuery();
 	}

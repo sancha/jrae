@@ -36,19 +36,15 @@ public class ParsedReviewData extends LabeledDataSet<LabeledDatum<Integer,Intege
 		MINCOUNT = minCount;
 	}
 	
-	/**
-	 * Initialize and populate all data-structures in this class by reading each file 
-	 * in the given directory, using each line as a data item and labelled per file.
-	 * The labels are created 0-(n-1) in alphabetical order of the strings.
-	 * Do not split for cross validation in this class
-	 * @param DirectoryName Reads all the files under this directory
-	 */
-	public ParsedReviewData(String DirectoryName, int minCount) throws IOException
-	{	
+	public ParsedReviewData(String DirectoryName, int minCount, String wordmapFile) 
+						throws IOException{
 		this(minCount);
 		
 		File Dir = new File(DirectoryName);
 		String[] files = Dir.list( );
+		
+		if (wordmapFile == null)
+			wordmapFile = new File(DirectoryName,"wordmap.map").getAbsolutePath();
 		
 		NumExamples = 0;
 		NumTestExamples = 0;
@@ -100,6 +96,20 @@ public class ParsedReviewData extends LabeledDataSet<LabeledDatum<Integer,Intege
 		
 		EmbedWords();
 		
+		try {
+			// Create file
+			FileWriter fstream = new FileWriter(wordmapFile);
+			BufferedWriter out = new BufferedWriter(fstream);
+			
+			for(String word : WordsIndexer.keySet())
+				out.write(word + " " + WordsIndexer.get(word));
+			
+			out.close();
+		} catch (Exception e) {// Catch exception if any
+			System.err.println("Could not write the wordmap file.");
+			System.err.println("Error: " + e.getMessage());
+		}
+		
 		printComplete();
 	}
 	
@@ -137,7 +147,7 @@ public class ParsedReviewData extends LabeledDataSet<LabeledDatum<Integer,Intege
 			iCountLines++;
 		}
 		inBr.close();
-		System.out.println("A total of "+iCountLines+" train examples read from " + FileName);
+		System.out.println(iCountLines+" train examples read from " + FileName);
 	}
 	
 	private void LoadTestFile(String FileName, int Label) throws IOException
@@ -156,14 +166,14 @@ public class ParsedReviewData extends LabeledDataSet<LabeledDatum<Integer,Intege
 			iCountLines++;
 		}
 		inBr.close();
-		System.out.println("A total of "+iCountLines+" test examples read from " + FileName);		
+		System.out.println(iCountLines+" test examples read from " + FileName);		
 	}
 	
 	protected void EmbedWords()
 	{
 		Counter<String> trimmedVocab = new Counter<String>();
 		Vocab.setCount(DataSet.UNK, MINCOUNT + 10);
-		
+
 		// Iterate through Vocab to set up WordsIndex
 		int i = 0;
 		for(String s : Vocab.keySet())

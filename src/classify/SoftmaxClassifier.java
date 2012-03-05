@@ -23,7 +23,7 @@ public class SoftmaxClassifier<F,L> implements ProbabilisticClassifier<F,L>{
 	int CatSize;
 	
 	ClassifierTheta ClassifierTheta;
-	Sigmoid SigmoidCalc;
+	DifferentiableMatrixFunction SigmoidCalc;
 	Minimizer<DifferentiableFunction> minFunc;
 	
 	Accuracy TrainAccuracy, TestAccuracy;
@@ -31,25 +31,29 @@ public class SoftmaxClassifier<F,L> implements ProbabilisticClassifier<F,L>{
 	public SoftmaxClassifier( )
 	{
 		LabelSet = new Counter<L>();
-		SigmoidCalc = new Sigmoid();
+		SigmoidCalc = null;
 		minFunc = new QNMinimizer(10,MaxIterations);
 	}
 	
 	public SoftmaxClassifier(ClassifierTheta ClassifierParams)
 	{
 		LabelSet = new Counter<L>();
-		SigmoidCalc = new Sigmoid();
 		minFunc = new QNMinimizer(10,MaxIterations);
 		
 		ClassifierTheta = ClassifierParams;
 		CatSize = ClassifierTheta.CatSize;
+		initActivationFunction(CatSize+1);
+	}
+	
+	protected void initActivationFunction(int numCategories)
+	{
+		SigmoidCalc = numCategories > 2 ? new Softmax() :new Sigmoid();
 	}
 	
 	public SoftmaxClassifier(String savedClassifierFile) 
 							throws IOException, ClassNotFoundException
 	{
 		LabelSet = new Counter<L>();
-		SigmoidCalc = new Sigmoid();
 		minFunc = new QNMinimizer(10,MaxIterations);
 		
 		FileInputStream fis = new FileInputStream(savedClassifierFile);
@@ -57,7 +61,8 @@ public class SoftmaxClassifier<F,L> implements ProbabilisticClassifier<F,L>{
 		ClassifierTheta = (ClassifierTheta) ois.readObject();
 		ois.close();		
 		
-		CatSize = ClassifierTheta.CatSize;		
+		CatSize = ClassifierTheta.CatSize;
+		initActivationFunction(CatSize+1);
 	}
 	
 	public Accuracy train(List<LabeledDatum<F,L>> Data)
@@ -108,8 +113,8 @@ public class SoftmaxClassifier<F,L> implements ProbabilisticClassifier<F,L>{
 			if( !LabelSet.containsKey(label) )
 				LabelSet.setCount(label, CatSize++);
 		}
+		initActivationFunction(CatSize);
 		CatSize -= 1;
-		System.out.println(CatSize);
 	}
 	
 	private int[] makeLabelVector(List<LabeledDatum<F,L>> Data)

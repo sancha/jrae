@@ -1,6 +1,7 @@
 package rae;
 
 import math.*;
+
 import org.jblas.*;
 import util.*;
 import java.util.*;
@@ -172,7 +173,7 @@ public class RAEPropagation {
 		}
 
 		// classifier on single words
-		Sigmoid SigmoidCalc = new Sigmoid();
+		DifferentiableMatrixFunction SigmoidCalc = CatSize > 1 ? new Softmax() : new Sigmoid();
 		DoubleMatrix Input = theta.Wcat.mmul(WordsEmbedded).addColumnVector(theta.bcat);
 		DoubleMatrix SM = SigmoidCalc.valueAt(Input);
 		DoubleMatrix Diff = SM.sub(CurrentLabel);

@@ -20,6 +20,7 @@ public class Arguments {
 	boolean isTestLabelsKnown = false;
 	
 	String ModelFile = null;
+	String WordMapFile = null;
 	String ClassifierFile = null;
 	String featuresOutputFile = null;
 	String ProbabilitiesOutputFile = null;
@@ -71,6 +72,9 @@ public class Arguments {
 		if (argMap.containsKey("-TrainModel"))
 			TrainModel = Boolean.parseBoolean(argMap.get("-TrainModel"));
 
+		if (argMap.containsKey("-WordMapFile"))
+			WordMapFile = argMap.get("-WordMapFile");
+		
 		if (argMap.containsKey("-ModelFile"))
 			ModelFile = argMap.get("-ModelFile");
 		else {
@@ -112,7 +116,7 @@ public class Arguments {
 			Dataset = new MatProcessData(dir);
 		} else if (argMap.containsKey("-DataDir")) {
 			dir = argMap.get("-DataDir");
-			ParsedReviewData Data = new ParsedReviewData(dir,minCount);
+			ParsedReviewData Data = new ParsedReviewData(dir,minCount,WordMapFile);
 			if (Data.isTestLablesKnown())
 			{
 				isTestLabelsKnown = true;
