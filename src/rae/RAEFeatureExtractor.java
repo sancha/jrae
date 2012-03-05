@@ -15,8 +15,6 @@ public class RAEFeatureExtractor {
 	DoubleMatrix features;
 	Lock lock;
 	
-	boolean CompatibilityMode = true;
-	
 	public RAEFeatureExtractor(int HiddenSize, FineTunableTheta Theta, double AlphaCat, double Beta, 
 								int CatSize, int DictionaryLength, DifferentiableMatrixFunction f)
 	{
@@ -80,11 +78,6 @@ public class RAEFeatureExtractor {
 		int CurrentLabel = data.getLabel();
 		
 		Tree tree = Propagator.ForwardPropagate(Theta, WordsEmbedded, null, CurrentLabel, SentenceLength);
-		
-		if(CompatibilityMode)
-		{
-			return tree.T[ 2 * SentenceLength - 2 ].Features.data;
-		}
 		
 		double[] feature = new double[ HiddenSize * 2 ];
 		DoubleMatrix tf = new DoubleMatrix(HiddenSize,TreeSize);

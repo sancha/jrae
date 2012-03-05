@@ -28,6 +28,11 @@ Refer run.sh for sample usage.
 	indicates the model file to be loaded to perform testing or feature 
 	extraction.
 	
+-ClassifierFile FILE
+	This parameter is compulsory. FILE indicates the file into which  the
+	trained classifier is saved if TRAINMODEL is set to TRUE. If not, it
+	indicates the model file to be loaded in to perform testing.
+	
 -FeaturesOutputFile FILE
 	This parameter is used only if not training. When not training, one of
 	FeaturesOutputFile or ProbabilitiesOutputFile is compulsory. The system

@@ -94,6 +94,7 @@ public class ParsedReviewData extends LabeledDataSet<LabeledDatum<Integer,Intege
 				LoadTestFile(FullFileName,CurrentLabel);
 			}
 		}
+		
 		if (testLabelsSeen.size () > 1)
 			testLabelsKnown = true;
 		
@@ -188,7 +189,8 @@ public class ParsedReviewData extends LabeledDataSet<LabeledDatum<Integer,Intege
 		assert fileName.length() > 8; //test/_.+/.txt 
 		assert isTestDataFile(fileName);
 		
-		return getLabel (getLabelString (fileName));
+		String labelName = getLabelString (fileName);
+		return getLabel (labelName);
 	}
 	
 	protected boolean isFile(String fileName){
@@ -225,7 +227,7 @@ public class ParsedReviewData extends LabeledDataSet<LabeledDatum<Integer,Intege
 	public int getLabel(String label)
 	{
 		for(Integer key : SecretLabelMapping.keySet())
-			if (SecretLabelMapping.get(key) == label)
+			if (SecretLabelMapping.get(key).equals(label))
 				return key;
 		return -1;
 	}

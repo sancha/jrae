@@ -1,11 +1,13 @@
 package classify;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.*;
-
 import math.*;
-
 import org.jblas.*;
-
 import util.Counter;
 
 /**
@@ -41,6 +43,21 @@ public class SoftmaxClassifier<F,L> implements ProbabilisticClassifier<F,L>{
 		
 		ClassifierTheta = ClassifierParams;
 		CatSize = ClassifierTheta.CatSize;
+	}
+	
+	public SoftmaxClassifier(String savedClassifierFile) 
+							throws IOException, ClassNotFoundException
+	{
+		LabelSet = new Counter<L>();
+		SigmoidCalc = new Sigmoid();
+		minFunc = new QNMinimizer(10,MaxIterations);
+		
+		FileInputStream fis = new FileInputStream(savedClassifierFile);
+		ObjectInputStream ois = new ObjectInputStream(fis);
+		ClassifierTheta = (ClassifierTheta) ois.readObject();
+		ois.close();		
+		
+		CatSize = ClassifierTheta.CatSize;		
 	}
 	
 	public Accuracy train(List<LabeledDatum<F,L>> Data)
@@ -169,5 +186,13 @@ public class SoftmaxClassifier<F,L> implements ProbabilisticClassifier<F,L>{
 			logProbablities.setCount(label, logProb);
 		}
 		return logProbablities;
+	}
+	
+	public void Dump (String fileName) throws IOException{
+		FileOutputStream fos = new FileOutputStream(fileName);
+		ObjectOutputStream oos = new ObjectOutputStream(fos);
+		oos.writeObject(ClassifierTheta);
+		oos.flush();
+		oos.close();
 	}
 }

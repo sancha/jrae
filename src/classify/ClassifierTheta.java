@@ -1,8 +1,12 @@
 package classify;
 
+import java.io.Serializable;
+
 import org.jblas.*;
 
-public class ClassifierTheta {
+public class ClassifierTheta implements Serializable{
+	private static final long serialVersionUID = -687919927781459921L;
+	
 	DoubleMatrix W,b;
 	double[] Theta;
 	int FeatureLength;
@@ -29,7 +33,6 @@ public class ClassifierTheta {
 		FeatureLength = W.rows;
 		this.W = W;
 		this.b = b;
-		System.out.println("Num_Categories : " + CatSize + "\nFeature_Size : " + FeatureLength);
 		Theta = new double[ FeatureLength * CatSize + CatSize];
 		flatten();
 	}

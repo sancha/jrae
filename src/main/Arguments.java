@@ -20,6 +20,7 @@ public class Arguments {
 	boolean isTestLabelsKnown = false;
 	
 	String ModelFile = null;
+	String ClassifierFile = null;
 	String featuresOutputFile = null;
 	String ProbabilitiesOutputFile = null;
 	
@@ -77,13 +78,20 @@ public class Arguments {
 			printUsage();
 		}
 		
+		if (argMap.containsKey("-ClassifierFile"))
+			ClassifierFile = argMap.get("-ClassifierFile");
+		else {
+			exitOnReturn = true;
+			printUsage();
+		}
+		
 		if (argMap.containsKey("-FeaturesOutputFile"))
 			featuresOutputFile = argMap.get("-FeaturesOutputFile");
 		
 		if (argMap.containsKey("-ProbabilitiesOutputFile"))
 			ProbabilitiesOutputFile = argMap.get("-ProbabilitiesOutputFile");
 		
-		if(!TrainModel && (ProbabilitiesOutputFile == null && featuresOutputFile == null)){
+		if (!TrainModel && (ProbabilitiesOutputFile == null && featuresOutputFile == null)){
 			System.err.println ("Please specify your output if you are not training.");
 			exitOnReturn = true;
 			printUsage();
@@ -106,7 +114,10 @@ public class Arguments {
 			dir = argMap.get("-DataDir");
 			ParsedReviewData Data = new ParsedReviewData(dir,minCount);
 			if (Data.isTestLablesKnown())
+			{
 				isTestLabelsKnown = true;
+				System.out.println("Test Lables known!");
+			}
 			Dataset = Data;
 		} else
 			Dataset = new MatProcessData(dir);

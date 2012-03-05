@@ -50,6 +50,17 @@ public class RAEBuilder {
 			FineTunableTheta tunedTheta = rae.train(params);
 			tunedTheta.Dump(params.ModelFile);
 			System.out.println("RAE trained. The model file is saved in " + params.ModelFile);
+			
+			RAEFeatureExtractor fe = new RAEFeatureExtractor(params.EmbeddingSize, tunedTheta, 
+					params.AlphaCat, params.Beta, params.CatSize, params.Dataset.Vocab.size(), rae.f);
+			SoftmaxClassifier<Double,Integer> classifier = new SoftmaxClassifier<Double,Integer>( );
+			
+			List<LabeledDatum<Double, Integer>> classifierTrainingData 
+											= fe.extractFeaturesIntoArray(params.Dataset.Data);
+			
+			Accuracy TrainAccuracy = classifier.train(classifierTrainingData);
+			System.out.println("Train Accuracy :" + TrainAccuracy.toString());
+			classifier.Dump(params.ClassifierFile);
 		}
 		else{
 			System.out.println("Using the trained RAE. Model file retrieved from " + params.ModelFile
@@ -59,7 +70,8 @@ public class RAEBuilder {
 			FineTunableTheta tunedTheta = rae.load(params);
 			assert tunedTheta.getNumCategories() == params.Dataset.getCatSize();
 			
-			SoftmaxClassifier<Double,Integer> classifier = new SoftmaxClassifier<Double,Integer>( tunedTheta.getClassifierParameters() );
+			SoftmaxClassifier<Double,Integer> classifier 
+									= new SoftmaxClassifier<Double,Integer>(params.ClassifierFile);
 			
 			RAEFeatureExtractor fe = new RAEFeatureExtractor(params.EmbeddingSize, tunedTheta, 
 					params.AlphaCat, params.Beta, params.CatSize, params.Dataset.Vocab.size(), rae.f);
@@ -68,10 +80,6 @@ public class RAEBuilder {
 			{
 				System.err.println("There is training data in the directory.");
 				System.err.println("It will be ignored when you are not in the training mode.");
-//				List<LabeledDatum<Double,Integer>>  classifierTrainingData = 
-//									 fe.extractFeaturesIntoArray(params.Dataset.Data);
-//				Accuracy TrainAccuracy = classifier.train(classifierTrainingData);
-//				System.out.println( "Train Accuracy :" + TrainAccuracy.toString() );
 			}
 
 			classifierTestingData = fe.extractFeaturesIntoArray(params.Dataset.TestData);
