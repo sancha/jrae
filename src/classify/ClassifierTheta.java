@@ -21,19 +21,15 @@ public class ClassifierTheta {
 		b = DoubleMatrix.rand(CatSize,1).subi(0.5);
 		Theta = new double[ FeatureLength * CatSize + CatSize ];
 		flatten();
-		//W = DoubleMatrix.concatHorizontally(W, DoubleMatrix.zeros(FeatureLength,1));
 	}
 	
-	/**
-	 * This constructor is only for storing the gradient, so we do not
-	 * concatenate a vector of zeros in the end.
-	 **/
 	public ClassifierTheta(DoubleMatrix W, DoubleMatrix b)
 	{
 		CatSize = W.columns;
 		FeatureLength = W.rows;
 		this.W = W;
 		this.b = b;
+		System.out.println("Num_Categories : " + CatSize + "\nFeature_Size : " + FeatureLength);
 		Theta = new double[ FeatureLength * CatSize + CatSize];
 		flatten();
 	}

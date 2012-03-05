@@ -1,32 +1,28 @@
 package io;
 
 import java.util.*;
-
+import util.Counter;
 import classify.Datum;
 
 public class DataSet<T extends Datum<F>,F> {
 	public static final int GOOD = 1, BAD = 0;
 	public static final String UNK = "*UNKNOWN*";
+	
+	public static int MINCOUNT = 5;
 
 	public List<T> Data;
-	public Set<String> Vocab;
+	public Counter<String> Vocab;
 	
 	public DataSet()
 	{
 		Data = new ArrayList<T>();
-		Vocab = new HashSet<String>();
+		Vocab = new Counter<String>();
 	}
 	
 	public DataSet(int capacity)
 	{
 		Data = new ArrayList<T>(capacity);
-		Vocab = new HashSet<String>();
-	}
-	
-	public DataSet(int capacity, Set<String> Vocab)
-	{
-		this(capacity);
-		this.Vocab = Vocab;
+		Vocab = new Counter<String>();
 	}
 	
 	public boolean add(T Datum)

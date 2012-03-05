@@ -3,6 +3,7 @@ package rae;
 import org.jblas.*;
 
 import java.io.*;
+import classify.ClassifierTheta;
 
 public class FineTunableTheta extends Theta{
 	
@@ -101,6 +102,16 @@ public class FineTunableTheta extends Theta{
 	{
 		return 4 * hiddenSize * visibleSize + hiddenSize * dictionaryLength 
                 + hiddenSize + 2 * visibleSize + CatSize * hiddenSize + CatSize;
+	}
+	
+	public int getNumCategories()
+	{
+		return CatSize+1;
+	}
+	
+	public ClassifierTheta getClassifierParameters()
+	{
+		return new ClassifierTheta(Wcat.transpose(),bcat);
 	}
 
 	@Override

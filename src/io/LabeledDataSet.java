@@ -25,26 +25,6 @@ public class LabeledDataSet<T extends LabeledDatum<F,L>,F,L> extends DataSet<T,F
 		labelSet = new HashMap<L,Integer>();
 	}
 	
-	public LabeledDataSet(int capacity, Set<String> Vocab)
-	{
-		super(capacity,Vocab);
-		labelCount = 0;
-		builtWithLabelSet = false;
-		labelSet = new HashMap<L,Integer>();
-	}
-	
-	public LabeledDataSet(int capacity, Set<String> Vocab, Collection<L> labelSet)
-	{
-		super(capacity,Vocab);
-		
-		labelCount = 0;
-		this.labelSet = new HashMap<L,Integer>();
-		builtWithLabelSet = true;
-		for(L label : labelSet)
-			if( !this.labelSet.containsKey(label) )
-				this.labelSet.put(label, labelCount++);
-	}
-	
 	@Override
 	public boolean add(T Datum)
 	{

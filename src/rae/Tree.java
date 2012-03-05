@@ -8,7 +8,6 @@ import java.util.*;
 
 public class Tree {
 	Node[] T;
-	//List<Pair<Integer,Integer>> structure;
 	Structure structure;
 	int SentenceLength, TreeSize;
 	double TotalScore;
@@ -40,6 +39,8 @@ public class Tree {
 			structure.add(new Pair<Integer,Integer>(-1,-1));
 		}		
 	}
+	
+	
 }
 
 class Structure extends ArrayList<Pair<Integer,Integer>>

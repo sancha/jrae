@@ -33,6 +33,16 @@ public class SoftmaxClassifier<F,L> implements ProbabilisticClassifier<F,L>{
 		minFunc = new QNMinimizer(10,MaxIterations);
 	}
 	
+	public SoftmaxClassifier(ClassifierTheta ClassifierParams)
+	{
+		LabelSet = new Counter<L>();
+		SigmoidCalc = new Sigmoid();
+		minFunc = new QNMinimizer(10,MaxIterations);
+		
+		ClassifierTheta = ClassifierParams;
+		CatSize = ClassifierTheta.CatSize;
+	}
+	
 	public Accuracy train(List<LabeledDatum<F,L>> Data)
 	{
 		populateLabels(Data);
@@ -63,7 +73,7 @@ public class SoftmaxClassifier<F,L> implements ProbabilisticClassifier<F,L>{
 		int[] Labels = makeLabelVector(Data);
 		
 		DoubleMatrix W = ClassifierTheta.W, b = ClassifierTheta.b;
-		
+		assert W.rows == Features.rows;
 		// Scores is a CatSize by NumExamples Matrix
 		DoubleMatrix Scores = SigmoidCalc.valueAt( ((W.transpose()).mmul(Features)).addColumnVector(b) );
 		Scores = DoubleMatrix.concatVertically(((Scores.columnSums()).mul(-1)).add(1),Scores);
