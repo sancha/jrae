@@ -14,6 +14,9 @@ Refer run.sh for sample usage.
 	If test labels are known, jrae will print out the final accuracy figures 
 	when the test completes.
 
+-minCount MINCOUNT
+	Default value is 5. Only words which occur atleast MINCOUNT number of times
+	are included in the vocabulary.
 
 -TrainModel TRUE|FALSE
 	Indicates whether to train an RAE based on the data provided by the DIR
