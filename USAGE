@@ -38,9 +38,9 @@ Refer run.sh for sample usage.
 	FeaturesOutputFile or ProbabilitiesOutputFile is compulsory. The system
 	extracts features for the test data using the Model and saves it in FILE  
 	
-	FILE should either not be a txt file or it should not point to the
-	same directory as the -DataDir option, because it will cause issues,
-	the next time the data is processed.
+	NOTE :: FILE should either not be a txt file or it should not point to the
+	same directory as the -DataDir option. The next time jrae processes the 
+	directory, it will read in the probabilities as training data.
 
 -ProbabilitiesOutputFile FILE
 	This parameter is used only if not training. When not training, one of
@@ -52,9 +52,9 @@ Refer run.sh for sample usage.
 	fixed in the next commit to list the labels themselves instead of the 
 	label index. 
 		
-	FILE should either not be a txt file or it should not point to the
-	same directory as the -DataDir option, because it will cause issues,
-	the next time the data is processed.
+	NOTE :: FILE should either not be a txt file or it should not point to the
+	same directory as the -DataDir option. The next time jrae processes the 
+	directory, it will read in the probabilities as training data.
 		
 -NumCores NUMCORES
 	Indicates how many parallel threads to use for feature processing. 

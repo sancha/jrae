@@ -79,9 +79,9 @@ public class FullRun {
 			FeatureExtractor = new RAEFeatureExtractor(params.EmbeddingSize, tunedTheta, 
 								params.AlphaCat, params.Beta, params.CatSize, params.DictionarySize, f);
 			List<LabeledDatum<Double,Integer>> classifierTrainingData = 
-								FeatureExtractor.extractFeaturesIntoArray(trainingData);
+								FeatureExtractor.extractFeaturesIntoArray(trainingData).getFirst();
 			List<LabeledDatum<Double,Integer>> classifierTestingData = 
-								FeatureExtractor.extractFeaturesIntoArray(testData);
+								FeatureExtractor.extractFeaturesIntoArray(testData).getFirst();
 			
 			SoftmaxClassifier<Double,Integer> classifier = new SoftmaxClassifier<Double,Integer>( );
 

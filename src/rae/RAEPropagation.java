@@ -145,7 +145,7 @@ public class RAEPropagation {
 			// freq(J_minpos) = (Tree.numkids(Tree.kids(sl+j,1))*freq1(J_minpos)
 			// +
 			// Tree.numkids(Tree.kids(sl+j,2))*freq2(J_minpos))/(Tree.numkids(Tree.kids(sl+j,1))+Tree.numkids(Tree.kids(sl+j,2)));
-			//
+			
 			WordsEmbedded = UpdateEmbedding(WordsEmbedded, J_minpos,
 					PNorm.getColumn(J_minpos));
 			CollapsedSentence.remove(J_minpos + 1);

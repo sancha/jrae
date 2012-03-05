@@ -20,6 +20,7 @@ public class SoftmaxClassifier<F,L> implements ProbabilisticClassifier<F,L>{
 	private final int MaxIterations = 100;
 	private final double Lambda = 1e-6;
 	private Counter<L> LabelSet;
+	private DoubleMatrix trainScores, testScores;
 	int CatSize;
 	
 	ClassifierTheta ClassifierTheta;
@@ -65,6 +66,25 @@ public class SoftmaxClassifier<F,L> implements ProbabilisticClassifier<F,L>{
 		initActivationFunction(CatSize+1);
 	}
 	
+	public DoubleMatrix getTrainingResults(List<LabeledDatum<F,L>> Data)
+	{
+		populateLabels(Data);
+		DoubleMatrix Features = makeFeatureMatrix(Data);
+		int[] Labels = makeLabelVector(Data);
+		
+		SoftmaxCost TrainingCostFunction = new SoftmaxCost(Features,Labels,CatSize,Lambda);
+		
+		ClassifierTheta = new ClassifierTheta(Features.rows,CatSize);
+		double[] InitialTheta = ClassifierTheta.Theta;
+		
+		double[] OptimalTheta = minFunc.minimize(TrainingCostFunction, 1e-6, InitialTheta);
+		ClassifierTheta = new ClassifierTheta(OptimalTheta,Features.rows,CatSize);
+		DoubleMatrix W = ClassifierTheta.W, b = ClassifierTheta.b;
+		
+		// Scores is a CatSize by NumExamples Matrix
+		return SigmoidCalc.valueAt( ((W.transpose()).mmul(Features)).addColumnVector(b) );
+	}
+	
 	public Accuracy train(List<LabeledDatum<F,L>> Data)
 	{
 		populateLabels(Data);
@@ -81,10 +101,10 @@ public class SoftmaxClassifier<F,L> implements ProbabilisticClassifier<F,L>{
 		DoubleMatrix W = ClassifierTheta.W, b = ClassifierTheta.b;
 		
 		// Scores is a CatSize by NumExamples Matrix
-		DoubleMatrix Scores = SigmoidCalc.valueAt( ((W.transpose()).mmul(Features)).addColumnVector(b) );
-		Scores = DoubleMatrix.concatVertically(((Scores.columnSums()).mul(-1)).add(1), Scores);
+		trainScores = SigmoidCalc.valueAt( ((W.transpose()).mmul(Features)).addColumnVector(b) );
+		trainScores = DoubleMatrix.concatVertically(((trainScores.columnSums()).mul(-1)).add(1), trainScores);
 	
-		int[] Predictions = Scores.columnArgmaxs();
+		int[] Predictions = trainScores.columnArgmaxs();
 		TrainAccuracy = new Accuracy(Predictions,Labels,CatSize);
 		return TrainAccuracy;
 	}
@@ -97,11 +117,25 @@ public class SoftmaxClassifier<F,L> implements ProbabilisticClassifier<F,L>{
 		DoubleMatrix W = ClassifierTheta.W, b = ClassifierTheta.b;
 		assert W.rows == Features.rows;
 		// Scores is a CatSize by NumExamples Matrix
-		DoubleMatrix Scores = SigmoidCalc.valueAt( ((W.transpose()).mmul(Features)).addColumnVector(b) );
-		Scores = DoubleMatrix.concatVertically(((Scores.columnSums()).mul(-1)).add(1),Scores);
-		int[] Predictions = Scores.columnArgmaxs();
+		testScores = SigmoidCalc.valueAt( ((W.transpose()).mmul(Features)).addColumnVector(b) );
+		testScores = DoubleMatrix.concatVertically(((testScores.columnSums()).mul(-1)).add(1),testScores);
+		int[] Predictions = testScores.columnArgmaxs();
 		TestAccuracy = new Accuracy(Predictions,Labels,CatSize);
 		return TestAccuracy;
+	}
+	
+	public DoubleMatrix getTrainScores()
+	{
+		if (trainScores == null)
+			System.err.println("Train scores polled before training! Will be null.");
+		return trainScores;
+	}
+	
+	public DoubleMatrix getTestScores()
+	{
+		if (testScores == null)
+			System.err.println("Test scores polled before training! Will be null.");
+		return testScores;
 	}
 	
 	private void populateLabels(List<LabeledDatum<F,L>> Data)

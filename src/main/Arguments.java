@@ -20,10 +20,12 @@ public class Arguments {
 	boolean isTestLabelsKnown = false;
 	
 	String ModelFile = null;
+	String TreeDumpDir = null;
 	String WordMapFile = null;
 	String ClassifierFile = null;
 	String featuresOutputFile = null;
 	String ProbabilitiesOutputFile = null;
+	
 	
 	boolean TrainModel = false;
 	int NumFolds = 10, MaxIterations = 80, EmbeddingSize = 50, CatSize = 1;

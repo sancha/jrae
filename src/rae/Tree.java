@@ -40,7 +40,10 @@ public class Tree {
 		}		
 	}
 	
-	
+	public String toString()
+	{
+		return null;
+	}
 }
 
 class Structure extends ArrayList<Pair<Integer,Integer>>
