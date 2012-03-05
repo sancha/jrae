@@ -3,10 +3,17 @@ Refer run.sh for sample usage.
 -DataDir DIR
 	Use all txt files in DIR as data. The data files are organized such that 
 	all instances corresponding to one class are listed in a single file 
-	named with its label. Each line in the text file is treated as a
-	single data instance. Put all unlabeled / test data in a file whose 
-	name starts with "test". For a reference, check "data/movie" directory
-	to see how the movie review data is organized.
+	named with its label. Each line in the text file is treated as a single 
+	data instance. All the test data may be put together into a single 
+	file with the same formatting if the labels are unknown. If the labels
+	are known, then use the same filename as you would for training data, 
+	but prefix it with "test_". So for example, all training data for the class
+	"action_thriller" will go into "action_thriller.txt" and test data of type
+	"action_thriller" go into "test_action_thriller.txt". 
+	
+	If test labels are known, jrae will print out the final accuracy figures 
+	when the test completes.
+
 
 -TrainModel TRUE|FALSE
 	Indicates whether to train an RAE based on the data provided by the DIR

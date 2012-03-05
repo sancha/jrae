@@ -12,7 +12,7 @@ import java.util.Set;
  */
 public class GenericCounter<E, V> implements Serializable {
 	
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = -767969689583483814L;
 	Map<E, V> entries;
 
 	/**

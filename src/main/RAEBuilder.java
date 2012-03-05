@@ -52,16 +52,28 @@ public class RAEBuilder {
 			System.out.println("RAE trained. The model file is saved in " + params.ModelFile);
 		}
 		else{
-			System.out.println("Using the trained RAE. Model file retrieved from " + params.ModelFile);
-			List<LabeledDatum<Double,Integer>>  classifierTrainingData = null,
-												classifierTestingData = null;
+			System.out.println("Using the trained RAE. Model file retrieved from " + params.ModelFile
+					+ "\nNote that this overrides all RAE specific arguments you passed.");
+			List<LabeledDatum<Double,Integer>> classifierTestingData = null;
 			
 			FineTunableTheta tunedTheta = rae.load(params);
-			SoftmaxClassifier<Double,Integer> classifier = new SoftmaxClassifier<Double,Integer>( );
+			assert tunedTheta.getNumCategories() == params.Dataset.getCatSize();
+			
+			SoftmaxClassifier<Double,Integer> classifier = new SoftmaxClassifier<Double,Integer>( tunedTheta.getClassifierParameters() );
 			
 			RAEFeatureExtractor fe = new RAEFeatureExtractor(params.EmbeddingSize, tunedTheta, 
 					params.AlphaCat, params.Beta, params.CatSize, params.Dataset.Vocab.size(), rae.f);
-			classifierTrainingData = fe.extractFeaturesIntoArray(params.Dataset.Data);
+			
+			if(params.Dataset.Data.size() > 0)
+			{
+				System.err.println("There is training data in the directory.");
+				System.err.println("It will be ignored when you are not in the training mode.");
+//				List<LabeledDatum<Double,Integer>>  classifierTrainingData = 
+//									 fe.extractFeaturesIntoArray(params.Dataset.Data);
+//				Accuracy TrainAccuracy = classifier.train(classifierTrainingData);
+//				System.out.println( "Train Accuracy :" + TrainAccuracy.toString() );
+			}
+
 			classifierTestingData = fe.extractFeaturesIntoArray(params.Dataset.TestData);
 			
 			if (params.featuresOutputFile != null)
@@ -77,9 +89,6 @@ public class RAEBuilder {
 				out.close();
 			}
 			
-			Accuracy TrainAccuracy = classifier.train(classifierTrainingData);
-			System.out.println( "Train Accuracy :" + TrainAccuracy.toString() );
-			
 			if (params.ProbabilitiesOutputFile != null)
 			{
 				PrintStream out = new PrintStream(params.ProbabilitiesOutputFile);
@@ -92,6 +101,12 @@ public class RAEBuilder {
 					out.println();
 				}
 				out.close();		
+			}
+			
+			if (params.isTestLabelsKnown)
+			{
+				Accuracy TestAccuracy = classifier.test(classifierTestingData);
+				System.out.println("Test Accuracy : " + TestAccuracy);
 			}
 		}
 	}

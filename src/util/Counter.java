@@ -95,6 +95,19 @@ public class Counter <E> implements Serializable {
       incrementCount(key, count);
     }
   }
+  
+  /**
+   * Adds a key to the counter if it does not exist and sets the count to 1.
+   * If not, increments the count of the key.
+   */
+  public void addKey (E key){
+	  incrementCount(key,1);
+  }
+  
+  public void addAll (E[] keys){
+	  for (E key : keys)
+		  addKey(key);
+  }
 
   public <T extends E> void incrementAll(Counter<T> counter) {
     for (T key : counter.keySet()) {

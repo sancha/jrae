@@ -125,8 +125,8 @@ public class RAEPropagation {
 			// System.out.println("Delta size : " + NewParent.DeltaOut1.rows +
 			// " " + NewParent.DeltaOut1.columns);
 
-			int LeftChildIndex = CollapsedSentence.get(J_minpos), RightChildIndex = CollapsedSentence
-					.get(J_minpos + 1);
+			int LeftChildIndex = CollapsedSentence.get(J_minpos), 
+				RightChildIndex = CollapsedSentence.get(J_minpos + 1);
 
 			Node LeftChild = tree.T[LeftChildIndex], RightChild = tree.T[RightChildIndex];
 
@@ -165,8 +165,8 @@ public class RAEPropagation {
 		int[] SubtreeSize = new int[TreeSize];
 
 		for (int i = SentenceLength; i < TreeSize; i++) {
-			int LeftChild = TreeStructure.get(i).getFirst(), RightChild = TreeStructure
-					.get(i).getSecond();
+			int LeftChild = TreeStructure.get(i).getFirst(), 
+				RightChild = TreeStructure.get(i).getSecond();
 
 			SubtreeSize[i] = SubtreeSize[LeftChild] + SubtreeSize[RightChild];
 		}

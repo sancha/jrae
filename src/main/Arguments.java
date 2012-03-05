@@ -1,5 +1,6 @@
 package main;
 
+import io.DataSet;
 import io.LabeledDataSet;
 import io.MatProcessData;
 import io.ParsedReviewData;
@@ -13,22 +14,32 @@ import util.CommandLineUtils;
 import classify.LabeledDatum;
 
 public class Arguments {
-	boolean TrainModel = false;
+	
 	String dir = "data/parsed/"; 
+	int minCount = DataSet.MINCOUNT;
+	boolean isTestLabelsKnown = false;
+	
 	String ModelFile = null;
 	String featuresOutputFile = null;
 	String ProbabilitiesOutputFile = null;
+	
+	boolean TrainModel = false;
 	int NumFolds = 10, MaxIterations = 80, EmbeddingSize = 50, CatSize = 1;
 	int DictionarySize, hiddenSize, visibleSize;
 	double AlphaCat = 0.2, Beta = 0.5;
 	double[] Lambda = new double[] { 1e-05, 0.0001, 1e-05, 0.01 };
+	
 	boolean exitOnReturn = false;
+	
 	LabeledDataSet<LabeledDatum<Integer, Integer>, Integer, Integer> Dataset = null;
 
 	public void parseArguments(String[] args) throws IOException {
 		Map<String, String> argMap = CommandLineUtils
 				.simpleCommandLineParser(args);
 
+		if (argMap.containsKey("-minCount"))
+			minCount = Integer.parseInt(argMap.get("-minCount"));
+		
 		if (argMap.containsKey("-NumFolds"))
 			NumFolds = Integer.parseInt(argMap.get("-NumFolds")) - 1;
 
@@ -93,7 +104,10 @@ public class Arguments {
 			Dataset = new MatProcessData(dir);
 		} else if (argMap.containsKey("-DataDir")) {
 			dir = argMap.get("-DataDir");
-			Dataset = new ParsedReviewData(dir);
+			ParsedReviewData Data = new ParsedReviewData(dir,minCount);
+			if (Data.isTestLablesKnown())
+				isTestLabelsKnown = true;
+			Dataset = Data;
 		} else
 			Dataset = new MatProcessData(dir);
 
@@ -102,8 +116,7 @@ public class Arguments {
 		hiddenSize = EmbeddingSize;
 		visibleSize = EmbeddingSize;
 
-		System.out.println("CatSize : " + Dataset.getCatSize() + "\n" + "DictionarySize : "
-				+ DictionarySize);
+		System.out.println ("NumCategories : " + Dataset.getCatSize());
 
 	}
 

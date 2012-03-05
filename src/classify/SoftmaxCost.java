@@ -81,7 +81,7 @@ public class SoftmaxCost extends MemoizedDifferentiableFunction
 		
 	    //System.out.println(Delta.columnSums());
 	    
-	    Gradient = new ClassifierTheta(gradW,gradb);
+	    Gradient = new ClassifierTheta(gradW.transpose(),gradb);
 	    value = Cost + RegularisationTerm;
 	    gradient = Gradient.Theta;
 	    

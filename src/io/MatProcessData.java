@@ -2,7 +2,7 @@ package io;
 
 import java.io.*;
 import java.util.*;
-
+import util.Counter;
 import classify.LabeledDatum;
 import classify.ReviewDatum;
 
@@ -58,14 +58,13 @@ public class MatProcessData extends LabeledDataSet<LabeledDatum<Integer,Integer>
 
 	public int getWordIndex(String Word)
 	{
-		if( Vocab.contains(Word) )
+		if( Vocab.containsKey(Word) )
 			return ReverseIndexer.get(Word);
 		return ReverseIndexer.get( DataSet.UNK );
 	}
 	
-	private Set<String> readVocabFile(String FileName) throws IOException {
-        int NumLines = IOUtils.countLines(FileName);
-        Set<String> Vocab = new HashSet<String>(NumLines);
+	private Counter<String> readVocabFile(String FileName) throws IOException {
+        Counter<String> Vocab = new Counter<String>();
 
         String strLine;
         FileInputStream fstream = new FileInputStream(FileName);
@@ -82,7 +81,7 @@ public class MatProcessData extends LabeledDataSet<LabeledDatum<Integer,Integer>
         	String Word = strLine.substring(SplitPoint+1).trim();
         	WordsIndexer.put(Index, Word);
         	ReverseIndexer.put(Word, Index);
-        	Vocab.add(Word);
+        	Vocab.addKey (Word);
         }
         in.close();
         return Vocab;
