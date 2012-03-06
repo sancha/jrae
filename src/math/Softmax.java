@@ -3,7 +3,8 @@ package math;
 import org.jblas.*;
 import util.ArraysHelper;
 
-public class Softmax extends DifferentiableMatrixFunction {
+public class Softmax extends DifferentiableMatrixFunction
+{
 	/**
 	 * @param M
 	 * @return e^{\eta_j} / \sum_i e^{\eta_i} 
@@ -12,7 +13,7 @@ public class Softmax extends DifferentiableMatrixFunction {
 	public DoubleMatrix valueAt(DoubleMatrix M) {
 		int[] rows = ArraysHelper.makeArray(0,M.rows-1);
 		DoubleMatrix exp = MatrixFunctions.exp(M);
-		exp = DoubleMatrix.concatVertically(exp, DoubleMatrix.ones(1, exp.columns));
+		exp = DoubleMatrix.concatVertically(DoubleMatrix.ones(1, exp.columns),exp);
 		DoubleMatrix sums = exp.columnSums();
 		return ((exp.diviRowVector(sums)).getRows(rows));
 	}

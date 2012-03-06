@@ -120,9 +120,9 @@ public class RAEPropagation {
 					.mmul(Y2C2.getColumn(J_minpos));
 			NewParent.Features = PNorm.getColumn(J_minpos);
 			NewParent.UnnormalizedFeatures = P.getColumn(J_minpos);
-			NewParent.score = J_min;
+			NewParent.scores = new double[]{ J_min };
 			tree.TotalScore += J_min;
-
+			
 			// System.out.println("Delta size : " + NewParent.DeltaOut1.rows +
 			// " " + NewParent.DeltaOut1.columns);
 
@@ -138,8 +138,8 @@ public class RAEPropagation {
 
 			LeftChild.parent = NewParent;
 			RightChild.parent = NewParent;
-			tree.structure.set(SentenceLength + j, new Pair<Integer, Integer>(
-					LeftChildIndex, RightChildIndex));
+			tree.structure.set(SentenceLength + j, 
+					new Pair<Integer, Integer>(LeftChildIndex, RightChildIndex));
 
 			// freq(J_minpos+1) = [];
 			// freq(J_minpos) = (Tree.numkids(Tree.kids(sl+j,1))*freq1(J_minpos)
@@ -164,7 +164,8 @@ public class RAEPropagation {
 		int TreeSize = 2 * SentenceLength - 1;
 		LabeledRAETree tree = new LabeledRAETree(SentenceLength, CurrentLabel, HiddenSize, CatSize, WordsEmbedded);
 		int[] SubtreeSize = new int[TreeSize];
-
+		DoubleMatrix labelVector = makeLabelVector (CurrentLabel);
+		
 		for (int i = SentenceLength; i < TreeSize; i++) {
 			int LeftChild = TreeStructure.get(i).getFirst(), 
 				RightChild = TreeStructure.get(i).getSecond();
@@ -174,6 +175,8 @@ public class RAEPropagation {
 
 		// classifier on single words
 		DifferentiableMatrixFunction SigmoidCalc = CatSize > 1 ? new Softmax() : new Sigmoid();
+//		SigmoidCalc = new Softmax();
+		
 		DoubleMatrix Input = theta.Wcat.mmul(WordsEmbedded).addColumnVector(theta.bcat);
 		DoubleMatrix SM = SigmoidCalc.valueAt(Input);
 		DoubleMatrix Diff = SM.sub(CurrentLabel);
@@ -183,10 +186,9 @@ public class RAEPropagation {
 		for (int i = 0; i < TreeSize; i++) {
 			Node CurrentNode = tree.T[i];
 			if (i < SentenceLength) {
-				// sum is just for converting to double. getColumn(i) should
-				// return only one value
-				CurrentNode.score = SquaredError.getColumn(i).sum();
+				CurrentNode.scores = SquaredError.getColumn(i).data;
 				CurrentNode.catDelta = ErrorGradient.getColumn(i);
+				tree.TotalScore += SquaredError.getColumn(i).sum();
 			} else {
 				int LeftChild = TreeStructure.get(i).getFirst(), RightChild = TreeStructure
 						.get(i).getSecond();
@@ -210,21 +212,20 @@ public class RAEPropagation {
 				// Eq. (7) in the paper (for special case of 1d label)
 				Input = (theta.Wcat.mmul(pNorm1)).addColumnVector(theta.bcat);
 				SM = SigmoidCalc.valueAt(Input);
-				Diff = SM.sub(CurrentLabel);
+				Diff = SM.subColumnVector(labelVector);
 				CurrentNode.catDelta = (Diff.mul(Beta * (1 - AlphaCat)))
 												.mul(SigmoidCalc.derivativeAt(Input));
-				CurrentNode.score = DoubleMatrixFunctions.SquaredNorm(Diff)
-												* 0.5 * Beta * (1 - AlphaCat);
+				CurrentNode.scores = SM.data;
+				tree.TotalScore += DoubleMatrixFunctions.SquaredNorm(Diff) * 0.5 * Beta * (1 - AlphaCat);
 
 				CurrentNode.SubtreeSize = SubtreeSize[i];
 			}
-			tree.TotalScore += CurrentNode.score;
 		}
 		tree.structure = TreeStructure;
 		return tree;
 	}
 
-	public void BackPropagate(LabeledRAETree tree, Theta theta, int[] WordsIndexed) {
+	public void BackPropagate(final LabeledRAETree tree, Theta theta, int[] WordsIndexed) {
 		int SentenceLength = WordsIndexed.length;
 		if (tree.T.length != 2 * SentenceLength - 1)
 			System.err.println("Bad Tree for backpropagation!");
@@ -331,10 +332,8 @@ public class RAEPropagation {
 
 			if (!CurrentNode.isLeaf()) 
 			{
-				ToPopulate.push(new Triplet<Node, Integer, Node>(
-						CurrentNode.LeftChild, 1, CurrentNode));
-				ToPopulate.push(new Triplet<Node, Integer, Node>(
-						CurrentNode.RightChild, 2, CurrentNode));
+				ToPopulate.push(new Triplet<Node, Integer, Node>(CurrentNode.LeftChild, 1, CurrentNode));
+				ToPopulate.push(new Triplet<Node, Integer, Node>(CurrentNode.RightChild, 2, CurrentNode));
 
 				DoubleMatrix A1 = CurrentNode.UnnormalizedFeatures, A1Norm = CurrentNode.Features;
 				DoubleMatrix ND1 = CurrentNode.DeltaOut1, ND2 = CurrentNode.DeltaOut2;
@@ -372,6 +371,14 @@ public class RAEPropagation {
 		}
 
 		incrementWordEmbedding(GL,WordsIndexed);
+	}
+	
+	private DoubleMatrix makeLabelVector (int label)
+	{
+		DoubleMatrix labelVector = DoubleMatrix.zeros (CatSize);
+		if (label > 0 && label <= CatSize)
+			labelVector.put(label-1, 0, 1);
+		return labelVector;
 	}
 	
 	private synchronized void incrementWordEmbedding(DoubleMatrix GL, int[] WordsIndexed)

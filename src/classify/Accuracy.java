@@ -8,6 +8,7 @@ public class Accuracy
 	
 	public Accuracy(int[] Predictions, int[] GoldLabels, int CatSize)
 	{
+		System.err.println(CatSize);
 		DoubleMatrix ConfusionMatrix = DoubleMatrix.zeros(CatSize+1,CatSize+1);
 		for(int i=0; i<GoldLabels.length; i++)
 		{

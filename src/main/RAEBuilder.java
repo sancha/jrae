@@ -17,6 +17,7 @@ import math.Norm1Tanh;
 import math.QNMinimizer;
 
 import classify.Accuracy;
+import classify.ClassifierTheta;
 import classify.LabeledDatum;
 import classify.SoftmaxClassifier;
 
@@ -50,9 +51,9 @@ public class RAEBuilder {
 		if (params.TrainModel) {
 			System.out.println("Training the RAE. Model file will be saved in "
 					+ params.ModelFile);
-			FineTunableTheta tunedTheta = rae.train(params);
+			FineTunableTheta tunedTheta = rae.train(params);			
 			tunedTheta.Dump(params.ModelFile);
-
+			
 			System.out.println("RAE trained. The model file is saved in "
 					+ params.ModelFile);
 
@@ -60,14 +61,14 @@ public class RAEBuilder {
 					params.EmbeddingSize, tunedTheta, params.AlphaCat,
 					params.Beta, params.CatSize, params.Dataset.Vocab.size(),
 					rae.f);
-			SoftmaxClassifier<Double, Integer> classifier = new SoftmaxClassifier<Double, Integer>();
-
+			
 			List<LabeledRAETree> Trees = fe.getRAETrees (params.Dataset.Data);
 			List<LabeledDatum<Double, Integer>> classifierTrainingData = fe.extractFeaturesIntoArray(Trees);
-			
+
+			SoftmaxClassifier<Double, Integer> classifier = new SoftmaxClassifier<Double, Integer>();
 			Accuracy TrainAccuracy = classifier.train(classifierTrainingData);
 			System.out.println("Train Accuracy :" + TrainAccuracy.toString());
-
+			
 			System.out
 					.println("Classifier trained. The model file is saved in "
 							+ params.ClassifierFile);
@@ -90,25 +91,24 @@ public class RAEBuilder {
 							+ params.ModelFile
 							+ "\nNote that this overrides all RAE specific arguments you passed.");
 
-			FineTunableTheta tunedTheta = rae.load(params);
+			FineTunableTheta tunedTheta = rae.loadRAE(params);
 			assert tunedTheta.getNumCategories() == params.Dataset.getCatSize();
 
-			SoftmaxClassifier<Double, Integer> classifier = new SoftmaxClassifier<Double, Integer>(
-					params.ClassifierFile);
+			SoftmaxClassifier<Double, Integer> classifier = rae.loadClassifier(params);
 
 			RAEFeatureExtractor fe = new RAEFeatureExtractor(
 					params.EmbeddingSize, tunedTheta, params.AlphaCat,
 					params.Beta, params.CatSize, params.Dataset.Vocab.size(),
 					rae.f);
-
+			
 			if (params.Dataset.Data.size() > 0) {
 				System.err.println("There is training data in the directory.");
 				System.err
 						.println("It will be ignored when you are not in the training mode.");
 			}
 
-			List<LabeledRAETree> Trees = fe.getRAETrees (params.Dataset.TestData);
-			List<LabeledDatum<Double, Integer>> classifierTestingData = fe.extractFeaturesIntoArray(Trees);
+			List<LabeledRAETree> testTrees = fe.getRAETrees (params.Dataset.TestData);
+			List<LabeledDatum<Double, Integer>> classifierTestingData = fe.extractFeaturesIntoArray(testTrees);
 
 			Accuracy TestAccuracy = classifier.test(classifierTestingData);
 			if (params.isTestLabelsKnown) {
@@ -186,7 +186,7 @@ public class RAEBuilder {
 		return tunedTheta;
 	}
 
-	private FineTunableTheta load(Arguments params) throws IOException,
+	private FineTunableTheta loadRAE(Arguments params) throws IOException,
 			ClassNotFoundException {
 		FineTunableTheta tunedTheta = null;
 		FileInputStream fis = new FileInputStream(params.ModelFile);
@@ -194,5 +194,17 @@ public class RAEBuilder {
 		tunedTheta = (FineTunableTheta) ois.readObject();
 		ois.close();
 		return tunedTheta;
+	}
+	
+	private SoftmaxClassifier<Double,Integer> loadClassifier 
+			(Arguments params) throws IOException, ClassNotFoundException {
+		SoftmaxClassifier<Double,Integer> classifier = null;
+		FileInputStream fis = new FileInputStream(params.ClassifierFile);
+		ObjectInputStream ois = new ObjectInputStream(fis);
+		ClassifierTheta ClassifierTheta = (ClassifierTheta) ois.readObject();
+		ois.close();
+		classifier = new SoftmaxClassifier<Double, Integer>
+					(ClassifierTheta, params.Dataset.getLabelSet());
+		return classifier;
 	}
 }

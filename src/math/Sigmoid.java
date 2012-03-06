@@ -2,9 +2,7 @@ package math;
 
 import org.jblas.*;
 
-public class Sigmoid extends DifferentiableMatrixFunction {
-
-	
+public class Sigmoid extends DifferentiableMatrixFunction{
 	/**
 	 * @param M
 	 * @return sigmoid = 1 ./ (1 + exp(-x));

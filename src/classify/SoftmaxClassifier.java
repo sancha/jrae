@@ -1,10 +1,9 @@
 package classify;
 
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.*;
 import math.*;
 import org.jblas.*;
@@ -16,7 +15,10 @@ import util.Counter;
  * that may go wrong if you try with something else. 
  * @author ssanjeev
  */
-public class SoftmaxClassifier<F,L> implements ProbabilisticClassifier<F,L>{
+public class SoftmaxClassifier<F,L> 
+	implements ProbabilisticClassifier<F,L>, Serializable{
+
+	private static final long serialVersionUID = 3043693828283322518L;
 	private final int MaxIterations = 100;
 	private final double Lambda = 1e-6;
 	private Counter<L> LabelSet;
@@ -36,34 +38,24 @@ public class SoftmaxClassifier<F,L> implements ProbabilisticClassifier<F,L>{
 		minFunc = new QNMinimizer(10,MaxIterations);
 	}
 	
-	public SoftmaxClassifier(ClassifierTheta ClassifierParams)
+	public SoftmaxClassifier(ClassifierTheta ClassifierParams, Set<L> labelSet)
 	{
 		LabelSet = new Counter<L>();
 		minFunc = new QNMinimizer(10,MaxIterations);
 		
+		CatSize = 0;
+		for(L label : labelSet)
+			LabelSet.setCount(label, CatSize++);
+		initActivationFunction(CatSize);
+		CatSize -= 1;
+		
 		ClassifierTheta = ClassifierParams;
-		CatSize = ClassifierTheta.CatSize;
-		initActivationFunction(CatSize+1);
+		assert CatSize == ClassifierTheta.CatSize;
 	}
 	
 	protected void initActivationFunction(int numCategories)
 	{
 		SigmoidCalc = numCategories > 2 ? new Softmax() :new Sigmoid();
-	}
-	
-	public SoftmaxClassifier(String savedClassifierFile) 
-							throws IOException, ClassNotFoundException
-	{
-		LabelSet = new Counter<L>();
-		minFunc = new QNMinimizer(10,MaxIterations);
-		
-		FileInputStream fis = new FileInputStream(savedClassifierFile);
-		ObjectInputStream ois = new ObjectInputStream(fis);
-		ClassifierTheta = (ClassifierTheta) ois.readObject();
-		ois.close();		
-		
-		CatSize = ClassifierTheta.CatSize;
-		initActivationFunction(CatSize+1);
 	}
 	
 	public DoubleMatrix getTrainingResults(List<LabeledDatum<F,L>> Data)
@@ -102,8 +94,8 @@ public class SoftmaxClassifier<F,L> implements ProbabilisticClassifier<F,L>{
 		
 		// Scores is a CatSize by NumExamples Matrix
 		trainScores = SigmoidCalc.valueAt( ((W.transpose()).mmul(Features)).addColumnVector(b) );
-		trainScores = DoubleMatrix.concatVertically(((trainScores.columnSums()).mul(-1)).add(1), trainScores);
-	
+		trainScores = DoubleMatrix.concatVertically
+							(((trainScores.columnSums()).mul(-1)).add(1), trainScores);
 		int[] Predictions = trainScores.columnArgmaxs();
 		TrainAccuracy = new Accuracy(Predictions,Labels,CatSize);
 		return TrainAccuracy;
@@ -115,10 +107,11 @@ public class SoftmaxClassifier<F,L> implements ProbabilisticClassifier<F,L>{
 		int[] Labels = makeLabelVector(Data);
 		
 		DoubleMatrix W = ClassifierTheta.W, b = ClassifierTheta.b;
-		assert W.rows == Features.rows;
+		System.err.println( W.rows + " " + Features.rows);
 		// Scores is a CatSize by NumExamples Matrix
 		testScores = SigmoidCalc.valueAt( ((W.transpose()).mmul(Features)).addColumnVector(b) );
-		testScores = DoubleMatrix.concatVertically(((testScores.columnSums()).mul(-1)).add(1),testScores);
+		testScores = DoubleMatrix.concatVertically
+							(((testScores.columnSums()).mul(-1)).add(1),testScores);
 		int[] Predictions = testScores.columnArgmaxs();
 		TestAccuracy = new Accuracy(Predictions,Labels,CatSize);
 		return TestAccuracy;

@@ -61,4 +61,12 @@ public abstract class ArraysHelper{
 		}
 		return baseArray;		
 	}
+	
+	public static String makeStringFromIntArray (int[] inp)
+	{
+		String str = "";
+		for (int i=0; i<inp.length; i++)
+			str += inp[i] + " ";
+		return str;
+	}
 }
