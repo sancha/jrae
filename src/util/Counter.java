@@ -108,7 +108,12 @@ public class Counter <E> implements Serializable {
 	  for (E key : keys)
 		  addKey(key);
   }
-
+  
+  public void addAll (Collection<E> keys){
+	  for (E key : keys)
+		  addKey(key);
+  }
+  
   public <T extends E> void incrementAll(Counter<T> counter) {
     for (T key : counter.keySet()) {
       double count = counter.getCount(key);

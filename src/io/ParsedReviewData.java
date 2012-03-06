@@ -2,8 +2,9 @@ package io;
 
 import java.io.*;
 import java.util.*;
+import edu.stanford.nlp.ie.machinereading.domains.ace.reader.*;
+import edu.stanford.nlp.ling.Word;
 
-import util.Counter;
 import classify.Datum;
 import classify.LabeledDatum;
 import classify.ReviewDatum;
@@ -18,16 +19,17 @@ public class ParsedReviewData extends LabeledDataSet<LabeledDatum<Integer,Intege
 { 
 	private int NumExamples, NumTestExamples, counter, testCounter;
 	private int[] Sentence_lengths;
-	private Map<String,Integer> WordsIndexer;
-	private Map<Integer,String> SecretLabelMapping;
+	private WordMap WordsIndexer;
+	private StringLabelSet labelMapping;
 	private boolean testLabelsKnown;
+	private RobustTokenizer<Word> tokenizer;
 	
 	public ParsedReviewData()
 	{
 		counter = 0;
 		testCounter = 0;
-		WordsIndexer = new HashMap<String, Integer>();
-		SecretLabelMapping = new HashMap<Integer, String>();
+		WordsIndexer = new WordMap();
+		labelMapping = new StringLabelSet();
 	}
 	
 	public ParsedReviewData(int minCount)
@@ -36,15 +38,19 @@ public class ParsedReviewData extends LabeledDataSet<LabeledDatum<Integer,Intege
 		MINCOUNT = minCount;
 	}
 	
-	public ParsedReviewData(String DirectoryName, int minCount, String wordmapFile) 
-						throws IOException{
+	public ParsedReviewData(String DirectoryName, int minCount, 
+			String wordmapFileName, String labelsetFileName) throws IOException{
 		this(minCount);
 		
 		File Dir = new File(DirectoryName);
+		File labelSetFile = null, wordMapFile = null;
 		String[] files = Dir.list( );
 		
-		if (wordmapFile == null)
-			wordmapFile = new File(DirectoryName,"wordmap.map").getAbsolutePath();
+		wordMapFile = (wordmapFileName == null)?
+				new File (DirectoryName,"wordmap.map"): new File (wordmapFileName);
+
+		labelSetFile = (labelsetFileName == null)?
+				new File (DirectoryName,"labels.map"): new File (labelsetFileName);
 		
 		NumExamples = 0;
 		NumTestExamples = 0;
@@ -58,57 +64,37 @@ public class ParsedReviewData extends LabeledDataSet<LabeledDatum<Integer,Intege
 					NumExamples += IOUtils.countLines(FullFileName);
 		}
 		
+		if (NumExamples == 0 && (!wordMapFile.exists () || !labelSetFile.exists ()) )
+			throw new IOException ("If you are not training, then please provide both " +
+									"the labels.map and wordmap.map files as input. ");
+		
 		Sentence_lengths = new int[ NumExamples ];
 		Data = new ArrayList<LabeledDatum<Integer,Integer>>( NumExamples );
 		TestData = new ArrayList<LabeledDatum<Integer,Integer>>( NumTestExamples );
 		
 		System.out.println(NumTestExamples + " " + NumExamples);
 		
-		int CurrentLabel = 0;
 		Arrays.sort(files);
-		for(String fileName : files )
+		LoadTrainingData(Dir, files);
+		
+		if (labelSetFile.exists())
+			labelMapping = new StringLabelSet (labelSetFile.getAbsolutePath());
+		else
 		{
-			String FullFileName = (new File(Dir,fileName)).getAbsolutePath();
-			if (isFile(FullFileName) && !isTestDataFile(FullFileName))
-			{
-				LoadFile(FullFileName,CurrentLabel);
-				labelSet.put(CurrentLabel,CurrentLabel);
-				SecretLabelMapping.put(CurrentLabel,getLabelString(fileName));
-				CurrentLabel++;
-			}
-		}
+			labelMapping.saveToFile(labelSetFile.getAbsolutePath());
+		}	
 		
+		LoadTestData(Dir, files);
 		
-		Set<Integer> testLabelsSeen = new HashSet<Integer>();
-		for(String fileName : files )
+		if (wordMapFile.exists())
+			WordsIndexer = new WordMap (wordMapFile.getAbsolutePath());			
+		else
 		{
-			String FullFileName = (new File(Dir,fileName)).getAbsolutePath();
-			if (isTestDataFile(FullFileName))
-			{
-				CurrentLabel = getTestLabel(FullFileName);
-				testLabelsSeen.add(CurrentLabel);
-				LoadTestFile(FullFileName,CurrentLabel);
-			}
+			WordsIndexer = new WordMap (Vocab, MINCOUNT);
+			WordsIndexer.saveToFile(wordmapFileName);
 		}
-		
-		if (testLabelsSeen.size () > 1)
-			testLabelsKnown = true;
 		
 		EmbedWords();
-		
-		try {
-			// Create file
-			FileWriter fstream = new FileWriter(wordmapFile);
-			BufferedWriter out = new BufferedWriter(fstream);
-			
-			for(String word : WordsIndexer.keySet())
-				out.write(word + " " + WordsIndexer.get(word) + "\n");
-			
-			out.close();
-		} catch (Exception e) {// Catch exception if any
-			System.err.println("Could not write the wordmap file.");
-			System.err.println("Error: " + e.getMessage());
-		}
 		
 		printComplete();
 	}
@@ -128,7 +114,44 @@ public class ParsedReviewData extends LabeledDataSet<LabeledDatum<Integer,Intege
 		System.out.println("}");
 	}
 	
-	private void LoadFile(String FileName, int Label) throws IOException
+	private void LoadTrainingData (File Dir, String[] files) throws IOException
+	{
+		int CurrentLabel = 0;
+		Arrays.sort(files);
+		for(String fileName : files )
+		{
+			String FullFileName = (new File(Dir,fileName)).getAbsolutePath();
+			if (isFile(FullFileName) && !isTestDataFile(FullFileName))
+			{
+				LoadTrainFile(FullFileName,CurrentLabel);
+				labelSet.put(CurrentLabel,CurrentLabel);
+				labelMapping.put(getLabelString(fileName),CurrentLabel);
+				CurrentLabel++;
+			}
+		}	
+	}
+	
+	private void LoadTestData (File Dir, String[] files) throws IOException
+	{
+		int CurrentLabel = 0;
+		Set<Integer> testLabelsSeen = new HashSet<Integer>();
+		for(String fileName : files )
+		{
+			String FullFileName = (new File(Dir,fileName)).getAbsolutePath();
+			if (isTestDataFile(FullFileName))
+			{
+				CurrentLabel = getTestLabel(FullFileName);
+				testLabelsSeen.add(CurrentLabel);
+				LoadTestFile(FullFileName,CurrentLabel);
+			}
+		}
+		
+		if (testLabelsSeen.size () > 1)
+			testLabelsKnown = true;
+		
+	}
+	
+	private void LoadTrainFile(String FileName, int Label) throws IOException
 	{
 		assert Label != ReviewDatum.UnknownLabel;
 		
@@ -137,12 +160,16 @@ public class ParsedReviewData extends LabeledDataSet<LabeledDatum<Integer,Intege
 		String sLine;
 		while ((sLine = inBr.readLine())!=null) {
 			sLine = sLine.trim();
-			String sWords[] = sLine.split(" ");
-			if (sWords == null || sWords.length == 0)
+			tokenizer = new RobustTokenizer<Word>(sLine);
+			Word[] words = tokenizer.tokenizeToWords();
+			
+			if (words == null || words.length == 0)
 				continue;
-			Data.add( new ReviewDatum(sLine, Label, counter) );
-			Vocab.addAll( sWords );
-			Sentence_lengths[counter] = sWords.length;
+			Data.add( new ReviewDatum(words, Label, counter) );
+			for (Word word : words)
+				Vocab.addKey( word.word() );
+			
+			Sentence_lengths[counter] = words.length;
 			counter++;	
 			iCountLines++;
 		}
@@ -157,11 +184,14 @@ public class ParsedReviewData extends LabeledDataSet<LabeledDatum<Integer,Intege
 		String sLine;
 		while ((sLine = inBr.readLine())!=null) {
 			sLine = sLine.trim();
-			String sWords[] = sLine.split(" ");
-			if (sWords == null || sWords.length == 0)
+			sLine = sLine.trim();
+			tokenizer = new RobustTokenizer<Word>(sLine);
+			Word[] words = tokenizer.tokenizeToWords();
+			
+			if (words == null || words.length == 0)
 				continue;
 			
-			TestData.add( new ReviewDatum(sLine, Label, testCounter) );
+			TestData.add( new ReviewDatum(words, Label, testCounter) );
 			testCounter++;
 			iCountLines++;
 		}
@@ -171,22 +201,8 @@ public class ParsedReviewData extends LabeledDataSet<LabeledDatum<Integer,Intege
 	
 	protected void EmbedWords()
 	{
-		Counter<String> trimmedVocab = new Counter<String>();
-		Vocab.setCount(DataSet.UNK, MINCOUNT + 10);
-
-		// Iterate through Vocab to set up WordsIndex
-		int i = 0;
-		for(String s : Vocab.keySet())
-			if (Vocab.getCount(s) >= MINCOUNT)
-			{	
-				WordsIndexer.put(s, i);
-				trimmedVocab.setCount(s, Vocab.getCount(s));
-				i++;
-			}
-	
-		Vocab = trimmedVocab;
+		Vocab = WordsIndexer.getVocab();
 		
-		// Update Words_Index
 		for (LabeledDatum<Integer,Integer> DataItem : Data) 
 			((ReviewDatum)DataItem).indexWords(WordsIndexer);
 
@@ -212,7 +228,6 @@ public class ParsedReviewData extends LabeledDataSet<LabeledDatum<Integer,Intege
 		return baseName.endsWith(".txt") && baseName.indexOf("test") == 0;
 	}
 	
-	
 	protected String getLabelString (String str)
 	{
 		String baseName = str;
@@ -234,28 +249,23 @@ public class ParsedReviewData extends LabeledDataSet<LabeledDatum<Integer,Intege
 		return baseName;
 	}
 	
-	public int getLabel(String label)
-	{
-		for(Integer key : SecretLabelMapping.keySet())
-			if (SecretLabelMapping.get(key).equals(label))
-				return key;
-		return -1;
-	}
-	
 	public boolean isTestLablesKnown()
 	{
 		return testLabelsKnown;
 	}
 	
+	public int getLabel(String label)
+	{
+		return labelMapping.getLabel(label);
+	}
+	
 	public String getLabelString (int label)
 	{
-		return SecretLabelMapping.get(label);
+		return labelMapping.getLabelString(label);
 	}
 	
 	public int getWordIndex(String Word)
 	{
-		if( Vocab.containsKey(Word) )
-			return WordsIndexer.get(Word);
-		return WordsIndexer.get( DataSet.UNK );
+		return WordsIndexer.getMapping(Word);
 	}
 }

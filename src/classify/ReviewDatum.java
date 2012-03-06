@@ -1,26 +1,47 @@
 package classify;
 
 import io.DataSet;
-
 import java.util.*;
+
+import edu.stanford.nlp.ling.Word;
 
 public class ReviewDatum implements LabeledDatum<Integer,Integer> {
 	public static final int UnknownLabel = -1;
 	
-	private String ReviewStr;
+	private String[] ReviewTokens;
 	private int[] Indices;
 	private int Label, Index;
 	
-	public ReviewDatum(String review, int label, int index)
+	public ReviewDatum(Word[] reviewTokens, int label, int index)
 	{
 		this.Label = label;
-		this.ReviewStr = review;
+		this.ReviewTokens = new String[ reviewTokens.length ];
+		for (int i=0; i<reviewTokens.length; i++)
+			this.ReviewTokens[i] = reviewTokens[i].word ();
 		this.Index = index;
 	}
 	
-	public ReviewDatum(String review, int label, int itemNo, int[] indices)
+	public ReviewDatum(Word[] ReviewTokens, int label, int itemNo, int[] indices)
 	{
-		this(review,label,itemNo);
+		this(ReviewTokens,label,itemNo);
+		assert ReviewTokens.length == indices.length;
+		this.Indices = new int[ indices.length ];
+		for(int i=0; i<indices.length; i++)
+			this.Indices[i] = indices[i];
+	}
+	
+	
+	public ReviewDatum(String[] reviewTokens, int label, int index)
+	{
+		this.Label = label;
+		this.ReviewTokens = reviewTokens;
+		this.Index = index;
+	}
+	
+	public ReviewDatum(String[] ReviewTokens, int label, int itemNo, int[] indices)
+	{
+		this(ReviewTokens,label,itemNo);
+		assert ReviewTokens.length == indices.length;
 		this.Indices = new int[ indices.length ];
 		for(int i=0; i<indices.length; i++)
 			this.Indices[i] = indices[i];
@@ -28,11 +49,10 @@ public class ReviewDatum implements LabeledDatum<Integer,Integer> {
 	
 	public void indexWords(Map<String,Integer> WordsIndexer)
 	{
-		String[] parts = ReviewStr.split(" ");
-		Indices = new int[ parts.length ];
-		for(int i=0; i<parts.length; i++)
-			if (WordsIndexer.containsKey(parts[i]))
-				Indices[i] = WordsIndexer.get(parts[i]);
+		Indices = new int[ ReviewTokens.length ];
+		for(int i=0; i<ReviewTokens.length; i++)
+			if (WordsIndexer.containsKey(ReviewTokens[i]))
+				Indices[i] = WordsIndexer.get(ReviewTokens[i]);
 			else
 				Indices[i] = WordsIndexer.get(DataSet.UNK);
 	}
@@ -55,7 +75,10 @@ public class ReviewDatum implements LabeledDatum<Integer,Integer> {
 	@Override
 	public String toString()
 	{
-		return Index + " // " + ReviewStr;
+		String retString = Index + " // ";
+		for (int i=0; i<ReviewTokens.length; i++)
+			retString += ReviewTokens[i] + " ";
+		return retString;
 	}
 	
 	public int[] getIndices()
