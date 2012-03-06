@@ -80,6 +80,7 @@ public class Arguments {
 		if (argMap.containsKey("-ModelFile"))
 			ModelFile = argMap.get("-ModelFile");
 		else {
+			System.err.println ("Please specify a ModelFile parameter.");
 			exitOnReturn = true;
 			printUsage();
 		}
@@ -87,6 +88,7 @@ public class Arguments {
 		if (argMap.containsKey("-ClassifierFile"))
 			ClassifierFile = argMap.get("-ClassifierFile");
 		else {
+			System.err.println ("Please specify a ClassifierFile parameter.");
 			exitOnReturn = true;
 			printUsage();
 		}

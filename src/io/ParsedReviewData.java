@@ -102,7 +102,7 @@ public class ParsedReviewData extends LabeledDataSet<LabeledDatum<Integer,Intege
 			BufferedWriter out = new BufferedWriter(fstream);
 			
 			for(String word : WordsIndexer.keySet())
-				out.write(word + " " + WordsIndexer.get(word));
+				out.write(word + " " + WordsIndexer.get(word) + "\n");
 			
 			out.close();
 		} catch (Exception e) {// Catch exception if any

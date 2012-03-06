@@ -10,8 +10,6 @@ import java.util.List;
 
 import org.jblas.DoubleMatrix;
 
-import util.Pair;
-
 import math.DifferentiableFunction;
 import math.DifferentiableMatrixFunction;
 import math.Minimizer;
@@ -25,7 +23,7 @@ import classify.SoftmaxClassifier;
 import rae.FineTunableTheta;
 import rae.RAECost;
 import rae.RAEFeatureExtractor;
-import rae.Tree;
+import rae.LabeledRAETree;
 
 public class RAEBuilder {
 	FineTunableTheta InitialTheta;
@@ -64,11 +62,9 @@ public class RAEBuilder {
 					rae.f);
 			SoftmaxClassifier<Double, Integer> classifier = new SoftmaxClassifier<Double, Integer>();
 
-			Pair<List<LabeledDatum<Double, Integer>>, List<Tree>> processedOutput = fe
-					.extractFeaturesIntoArray(params.Dataset.Data);
-			List<LabeledDatum<Double, Integer>> classifierTrainingData = processedOutput
-					.getFirst();
-
+			List<LabeledRAETree> Trees = fe.getRAETrees (params.Dataset.Data);
+			List<LabeledDatum<Double, Integer>> classifierTrainingData = fe.extractFeaturesIntoArray(Trees);
+			
 			Accuracy TrainAccuracy = classifier.train(classifierTrainingData);
 			System.out.println("Train Accuracy :" + TrainAccuracy.toString());
 
@@ -86,15 +82,13 @@ public class RAEBuilder {
 						classifier.getTrainScores());
 
 			if (params.featuresOutputFile != null)
-				rae.DumpTrees(params.TreeDumpDir, processedOutput.getSecond());
+				rae.DumpTrees(params.TreeDumpDir, Trees);
 
 		} else {
 			System.out
 					.println("Using the trained RAE. Model file retrieved from "
 							+ params.ModelFile
 							+ "\nNote that this overrides all RAE specific arguments you passed.");
-
-			List<LabeledDatum<Double, Integer>> classifierTestingData = null;
 
 			FineTunableTheta tunedTheta = rae.load(params);
 			assert tunedTheta.getNumCategories() == params.Dataset.getCatSize();
@@ -113,10 +107,8 @@ public class RAEBuilder {
 						.println("It will be ignored when you are not in the training mode.");
 			}
 
-			Pair<List<LabeledDatum<Double, Integer>>, List<Tree>> processedOutput = fe
-					.extractFeaturesIntoArray(params.Dataset.TestData);
-
-			classifierTestingData = processedOutput.getFirst();
+			List<LabeledRAETree> Trees = fe.getRAETrees (params.Dataset.TestData);
+			List<LabeledDatum<Double, Integer>> classifierTestingData = fe.extractFeaturesIntoArray(Trees);
 
 			Accuracy TestAccuracy = classifier.test(classifierTestingData);
 			if (params.isTestLabelsKnown) {
@@ -161,7 +153,7 @@ public class RAEBuilder {
 		out.close();
 	}
 
-	public void DumpTrees(String TreesDumpDirectory, List<Tree> trees)
+	public void DumpTrees(String TreesDumpDirectory, List<LabeledRAETree> trees)
 			throws Exception {
 		throw new Exception("Dumping trees not implemented yet!");
 	}

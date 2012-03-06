@@ -1,6 +1,7 @@
 package math;
 
 import org.jblas.*;
+import util.ArraysHelper;
 
 public class Softmax extends DifferentiableMatrixFunction {
 	/**
@@ -9,9 +10,11 @@ public class Softmax extends DifferentiableMatrixFunction {
 	 */
 	@Override
 	public DoubleMatrix valueAt(DoubleMatrix M) {
-		DoubleMatrix exp = MatrixFunctions.exp(M); //.mul(-1))).addi(1);
+		int[] rows = ArraysHelper.makeArray(0,M.rows-1);
+		DoubleMatrix exp = MatrixFunctions.exp(M);
+		exp = DoubleMatrix.concatVertically(exp, DoubleMatrix.ones(1, exp.columns));
 		DoubleMatrix sums = exp.columnSums();
-		return exp.diviRowVector(sums);
+		return ((exp.diviRowVector(sums)).getRows(rows));
 	}
 
 	/**

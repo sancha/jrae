@@ -35,6 +35,8 @@ public class RAECostTest {
 		
 		assertTrue( GradientChecker.check(cost) );
 		
+		System.out.println (cost.valueAt(xMat.data));
+		
 		assertTrue( Math.abs(cost.valueAt(xMat.data)-0.5257024003476533) < 1e-10 );
 		
 	}

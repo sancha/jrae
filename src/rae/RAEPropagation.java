@@ -47,9 +47,9 @@ public class RAEPropagation {
 	/**
 	 * Building the tree / kids and forward propagation
 	 */
-	public Tree ForwardPropagate(Theta theta, DoubleMatrix WordsEmbedded,
+	public LabeledRAETree ForwardPropagate(Theta theta, DoubleMatrix WordsEmbedded,
 			FloatMatrix Freq, int CurrentLabel, int SentenceLength) {
-		Tree tree = new Tree(SentenceLength, HiddenSize, WordsEmbedded);
+		LabeledRAETree tree = new LabeledRAETree(SentenceLength, CurrentLabel, HiddenSize, WordsEmbedded);
 		ArrayList<Integer> CollapsedSentence = new ArrayList<Integer>(
 				SentenceLength);
 		for (int i = 0; i < SentenceLength; i++)
@@ -157,12 +157,12 @@ public class RAEPropagation {
 	/**
 	 * Returning the classification error for the given tree.
 	 */
-	public Tree ForwardPropagate(FineTunableTheta theta,
+	public LabeledRAETree ForwardPropagate(FineTunableTheta theta,
 			DoubleMatrix WordsEmbedded, FloatMatrix Freq, int CurrentLabel,
 			int SentenceLength, Structure TreeStructure) {
-		int CatSize = theta.Wcat.columns;
+		int CatSize = theta.Wcat.rows;
 		int TreeSize = 2 * SentenceLength - 1;
-		Tree tree = new Tree(SentenceLength, HiddenSize, CatSize, WordsEmbedded);
+		LabeledRAETree tree = new LabeledRAETree(SentenceLength, CurrentLabel, HiddenSize, CatSize, WordsEmbedded);
 		int[] SubtreeSize = new int[TreeSize];
 
 		for (int i = SentenceLength; i < TreeSize; i++) {
@@ -178,8 +178,7 @@ public class RAEPropagation {
 		DoubleMatrix SM = SigmoidCalc.valueAt(Input);
 		DoubleMatrix Diff = SM.sub(CurrentLabel);
 		DoubleMatrix SquaredError = (Diff.mul(Diff)).mul((1 - AlphaCat) * 0.5f);
-		DoubleMatrix ErrorGradient = Diff.mul(1 - AlphaCat).mul(
-											SigmoidCalc.derivativeAt(Input));
+		DoubleMatrix ErrorGradient = Diff.mul(1 - AlphaCat).mul(SigmoidCalc.derivativeAt(Input));
 
 		for (int i = 0; i < TreeSize; i++) {
 			Node CurrentNode = tree.T[i];
@@ -225,7 +224,7 @@ public class RAEPropagation {
 		return tree;
 	}
 
-	public void BackPropagate(Tree tree, Theta theta, int[] WordsIndexed) {
+	public void BackPropagate(LabeledRAETree tree, Theta theta, int[] WordsIndexed) {
 		int SentenceLength = WordsIndexed.length;
 		if (tree.T.length != 2 * SentenceLength - 1)
 			System.err.println("Bad Tree for backpropagation!");
@@ -296,7 +295,7 @@ public class RAEPropagation {
 		incrementWordEmbedding(GL,WordsIndexed);
 	}
 
-	public void BackPropagate(Tree tree, FineTunableTheta theta,
+	public void BackPropagate(LabeledRAETree tree, FineTunableTheta theta,
 			int[] WordsIndexed) {
 		int SentenceLength = WordsIndexed.length;
 		if (tree.T.length != 2 * SentenceLength - 1)
@@ -325,8 +324,7 @@ public class RAEPropagation {
 			if (ParentNode == null)
 				YCSelector = new DoubleMatrix[] { Y0C0, null, null };
 			else
-				YCSelector = new DoubleMatrix[] { Y0C0, ParentNode.Y1C1,
-						ParentNode.Y2C2 };
+				YCSelector = new DoubleMatrix[] { Y0C0, ParentNode.Y1C1, ParentNode.Y2C2 };
 
 			DoubleMatrix NodeW = W[LeftOrRight];
 			DoubleMatrix delta = YCSelector[LeftOrRight];

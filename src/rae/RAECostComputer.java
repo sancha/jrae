@@ -65,7 +65,7 @@ public class RAECostComputer
 				if(SentenceLength == 1)
 					return;
 				
-				Tree tree = Propagator.ForwardPropagate(Theta, WordsEmbedded, FreqOrig, 
+				LabeledRAETree tree = Propagator.ForwardPropagate(Theta, WordsEmbedded, FreqOrig, 
 										CurrentLabel, SentenceLength, AllKids[index]);
 				
 				Propagator.BackPropagate(tree, Theta, WordIndices);
@@ -108,7 +108,7 @@ public class RAECostComputer
 				if(SentenceLength == 1) 
 					return;
 				
-				Tree tree = Propagator.ForwardPropagate(Theta, WordsEmbedded, FreqOrig, CurrentLabel, SentenceLength);
+				LabeledRAETree tree = Propagator.ForwardPropagate(Theta, WordsEmbedded, FreqOrig, CurrentLabel, SentenceLength);
 				AllKids[ index ] = tree.structure;
 				
 				Propagator.BackPropagate(tree, Theta, WordIndices);

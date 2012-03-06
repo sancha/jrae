@@ -5,7 +5,6 @@ import java.util.concurrent.locks.*;
 import math.DifferentiableMatrixFunction;
 import org.jblas.*;
 import util.ArraysHelper;
-import util.Pair;
 import classify.*;
 import parallel.*;
 
@@ -25,29 +24,26 @@ public class RAEFeatureExtractor {
 		lock = new ReentrantLock();
 	}
 	
-	public Pair<List<LabeledDatum<Double,Integer>>,List<Tree>>
-	extractFeaturesIntoArray(List<LabeledDatum<Integer,Integer>> Data)
+	public List<LabeledDatum<Double,Integer>>
+	extractFeaturesIntoArray(List<LabeledRAETree> trees)
 	{	
-		int numExamples = Data.size();
+		int numExamples = trees.size();
 		final LabeledDatum<Double,Integer>[] DataFeatures = new ReviewFeatures[numExamples];
-		final Tree[] ExtractedTrees = new Tree[numExamples];
 		
-		Parallel.For(Data, new Parallel.Operation<LabeledDatum<Integer,Integer>>(){
+		Parallel.For(trees, new Parallel.Operation<LabeledRAETree>(){
 			@Override
-			public void perform(int index, LabeledDatum<Integer, Integer> Datum) {
-				Pair<Tree,double[]> tree_feature = extractFeatures(Datum);
+			public void perform(int index, LabeledRAETree tree) {
+				double[] feature = tree.getFeaturesVector();
 				lock.lock();
 				{
-					ReviewFeatures r = new ReviewFeatures
-							(Datum.toString(), Datum.getLabel(), index, tree_feature.getSecond());
+					ReviewFeatures r = 
+						new ReviewFeatures (null, tree.getLabel(), index, feature);
 					DataFeatures[index] = r;
-					ExtractedTrees[index] = tree_feature.getFirst();
 				}
 				lock.unlock();
 			}
 		});	
-		return new Pair<List<LabeledDatum<Double,Integer>>,List<Tree>>
-				(Arrays.asList(DataFeatures),Arrays.asList(ExtractedTrees));
+		return Arrays.asList(DataFeatures);
 	}
 	
 	public DoubleMatrix extractFeatures(List<LabeledDatum<Integer,Integer>> Data)
@@ -58,10 +54,10 @@ public class RAEFeatureExtractor {
 		Parallel.For(Data, new Parallel.Operation<LabeledDatum<Integer,Integer>>(){
 			@Override
 			public void perform(int index, LabeledDatum<Integer, Integer> data) {
-				Pair<Tree,double[]> tree_feature = extractFeatures(data);
+				double[] feature = extractFeatures(data);
 				lock.lock();
 				{
-					features.putColumn(index, new DoubleMatrix(tree_feature.getSecond()));				
+					features.putColumn(index, new DoubleMatrix(feature));				
 				}
 				lock.unlock();
 			}
@@ -69,10 +65,33 @@ public class RAEFeatureExtractor {
 		return features;
 	}
 	
-	public Pair<Tree,double[]> extractFeatures(LabeledDatum<Integer,Integer> data)
+	public double[] extractFeatures (LabeledDatum<Integer,Integer> Data)
+	{
+		return getRAETree (Data).getFeaturesVector();
+	}
+		
+	public List<LabeledRAETree> getRAETrees(List<LabeledDatum<Integer,Integer>> Data)
+	{
+		int numExamples = Data.size();
+		final LabeledRAETree[] ExtractedTrees = new LabeledRAETree[numExamples];
+
+		Parallel.For(Data, new Parallel.Operation<LabeledDatum<Integer,Integer>>(){
+			@Override
+			public void perform(int index, LabeledDatum<Integer, Integer> data) {
+				LabeledRAETree tree = getRAETree(data);
+				lock.lock();
+				{
+					ExtractedTrees[index] = tree;				
+				}
+				lock.unlock();
+			}
+		});	
+		return Arrays.asList(ExtractedTrees);
+	}
+	
+	public LabeledRAETree getRAETree(LabeledDatum<Integer,Integer> data)
 	{
 		int SentenceLength = data.getFeatures().size();
-		int TreeSize = 2 * SentenceLength - 1;
 		
 		if(SentenceLength == 0)
 			System.err.println("Zero length data");
@@ -82,26 +101,6 @@ public class RAEFeatureExtractor {
 		DoubleMatrix WordsEmbedded = Theta.We.getColumns(wordIndices);
 		int CurrentLabel = data.getLabel();
 		
-		Tree tree = Propagator.ForwardPropagate(Theta, WordsEmbedded, null, CurrentLabel, SentenceLength);
-		
-		double[] feature = new double[ HiddenSize * 2 ];
-		DoubleMatrix tf = new DoubleMatrix(HiddenSize,TreeSize);
-		if(SentenceLength > 1)
-		{
-			for(int i=0; i<TreeSize; i++)
-				tf.putColumn(i, tree.T[i].Features);
-			tf.muli(1.0/TreeSize);
-			
-			System.arraycopy(tree.T[ 2 * SentenceLength - 2 ].Features.data, 0, feature, 0, HiddenSize);
-			System.arraycopy(tf.rowSums().data, 0, feature, HiddenSize, HiddenSize);
-		}
-		else
-		{
-			//features1(ii,:) = Tree.nodeFeatures(:,1);
-	        //features2(ii,:) = Tree.nodeFeatures(:,1);
-			System.arraycopy(tree.T[ 2 * SentenceLength - 2].Features.data, 0, feature, 0, HiddenSize);
-			System.arraycopy(tree.T[ 2 * SentenceLength - 2].Features.data, 0, feature, HiddenSize, HiddenSize);
-		}
-		return new Pair<Tree,double[]>(tree, feature);
+		return Propagator.ForwardPropagate(Theta, WordsEmbedded, null, CurrentLabel, SentenceLength);
 	}	
 }
