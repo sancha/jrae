@@ -91,7 +91,7 @@ public class ParsedReviewData extends LabeledDataSet<LabeledDatum<Integer,Intege
 		else
 		{
 			WordsIndexer = new WordMap (Vocab, MINCOUNT);
-			WordsIndexer.saveToFile(wordmapFileName);
+			WordsIndexer.saveToFile(wordMapFile.getAbsolutePath());
 		}
 		
 		EmbedWords();

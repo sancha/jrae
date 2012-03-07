@@ -55,7 +55,7 @@ public abstract class StringIntegerMap extends HashMap<String,Integer>
 
 			out.close();
 		} catch (Exception e) {// Catch exception if any
-			System.err.println("Could not write the wordmap file.");
+			System.err.println("Could not write the file : " + fileName);
 			System.err.println("Error: " + e.getMessage());
 		}
 	}

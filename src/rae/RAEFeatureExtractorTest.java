@@ -34,7 +34,7 @@ public class RAEFeatureExtractorTest {
 
 	public void test(int[] indices, double[] expected_result)
 	{
-		ReviewDatum d = new ReviewDatum("0", 1, 1, indices);
+		ReviewDatum d = new ReviewDatum(new String[]{"0"}, 1, 1, indices);
 		double[] result = FeatureExtractor.extractFeatures(d);
 		double[] diff = DoubleArrays.subtract(result, expected_result);
 		double totalDiff = 0;

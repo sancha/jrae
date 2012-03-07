@@ -22,6 +22,7 @@ public class Arguments {
 	String ModelFile = null;
 	String TreeDumpDir = null;
 	String WordMapFile = null;
+	String LabelMapFile = null;
 	String ClassifierFile = null;
 	String featuresOutputFile = null;
 	String ProbabilitiesOutputFile = null;
@@ -75,7 +76,28 @@ public class Arguments {
 			TrainModel = Boolean.parseBoolean(argMap.get("-TrainModel"));
 
 		if (argMap.containsKey("-WordMapFile"))
+		{
 			WordMapFile = argMap.get("-WordMapFile");
+			if (!exists (WordMapFile))
+			{	
+				System.err.println ("Your WordMapFile points to an invalid file!");
+				exitOnReturn = true;
+				printUsage();
+				return;
+			}	
+		}
+		
+		if (argMap.containsKey("-LabelMapFile"))
+		{	
+			LabelMapFile = argMap.get("-LabelMapFile");
+			if (!exists (LabelMapFile))
+			{	
+				System.err.println ("Your LabelMapFile points to an invalid file!");
+				exitOnReturn = true;
+				printUsage();
+				return;
+			}	
+		}
 		
 		if (argMap.containsKey("-ModelFile"))
 			ModelFile = argMap.get("-ModelFile");
@@ -83,6 +105,7 @@ public class Arguments {
 			System.err.println ("Please specify a ModelFile parameter.");
 			exitOnReturn = true;
 			printUsage();
+			return;
 		}
 		
 		if (argMap.containsKey("-ClassifierFile"))
@@ -91,6 +114,7 @@ public class Arguments {
 			System.err.println ("Please specify a ClassifierFile parameter.");
 			exitOnReturn = true;
 			printUsage();
+			return;
 		}
 		
 		if (argMap.containsKey("-FeaturesOutputFile"))
@@ -120,7 +144,7 @@ public class Arguments {
 			Dataset = new MatProcessData(dir);
 		} else if (argMap.containsKey("-DataDir")) {
 			dir = argMap.get("-DataDir");
-			ParsedReviewData Data = new ParsedReviewData(dir,minCount,WordMapFile);
+			ParsedReviewData Data = new ParsedReviewData(dir,minCount,WordMapFile,LabelMapFile);
 			if (Data.isTestLablesKnown())
 			{
 				isTestLabelsKnown = true;
@@ -136,7 +160,6 @@ public class Arguments {
 		visibleSize = EmbeddingSize;
 
 		System.out.println ("NumCategories : " + Dataset.getCatSize());
-
 	}
 
 	public void printUsage() {
@@ -154,7 +177,11 @@ public class Arguments {
 			// Catch exception if any
 			System.err.println("Error: " + e.getMessage());
 		}
-
+	}
+	
+	private boolean exists (String fileName)
+	{
+		return new File (fileName).exists();
 	}
 
 }

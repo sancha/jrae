@@ -175,7 +175,6 @@ public class RAEPropagation {
 
 		// classifier on single words
 		DifferentiableMatrixFunction SigmoidCalc = CatSize > 1 ? new Softmax() : new Sigmoid();
-//		SigmoidCalc = new Softmax();
 		
 		DoubleMatrix Input = theta.Wcat.mmul(WordsEmbedded).addColumnVector(theta.bcat);
 		DoubleMatrix SM = SigmoidCalc.valueAt(Input);

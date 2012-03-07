@@ -36,13 +36,11 @@ public class MatProcessData extends LabeledDataSet<LabeledDatum<Integer,Integer>
         int LineCount = 0;
         while ((strLine = br.readLine()) != null) 
         {
-        	String Sentence = "";
-            String[] StrIndices = strLine.split(" ");
+			String[] StrIndices = strLine.split(" ");
             int[] Indices = new int[ StrIndices.length-1 ];
             for(int i=1; i < StrIndices.length; i++)
             {
                 Indices[ i-1 ] = Integer.parseInt(StrIndices[i]);
-                Sentence += WordsIndexer.get(Indices[i-1]) + " ";
                 
                 if(Indices[i-1] < 0 || Indices[i-1] >= Vocab.size()){
                 	System.err.println("Corrupted data " + StrIndices[i] );
@@ -50,7 +48,7 @@ public class MatProcessData extends LabeledDataSet<LabeledDatum<Integer,Integer>
                 }
             }
             int Label = Integer.parseInt( StrIndices[0] );
-            Data.add( new ReviewDatum(Sentence.trim(), Label, LineCount, Indices) );
+            Data.add( new ReviewDatum(StrIndices, Label, LineCount, Indices) );
             LineCount++;
         }
         in.close();
