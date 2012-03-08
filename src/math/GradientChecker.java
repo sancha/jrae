@@ -11,7 +11,8 @@ public class GradientChecker {
 		int attempts = 10;
 		while( attempts > 0 )
 		{
-			DoubleMatrix xMat = attempts != 10 ? DoubleMatrix.rand(size) : DoubleMatrix.ones(size).mul(100.0);
+			DoubleMatrix xMat = DoubleMatrix.rand(size);
+//			DoubleMatrix xMat = attempts != 10 ? DoubleMatrix.rand(size) : DoubleMatrix.ones(size).mul(100.0);
 			double[] x = xMat.data;
 			double ReturnedCost = Func.valueAt(x);
 			double[] ReturnedGradient = Func.derivativeAt(x);

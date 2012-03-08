@@ -83,6 +83,8 @@ public class SoftmaxClassifier<F,L>
 		DoubleMatrix Features = makeFeatureMatrix(Data);
 		int[] Labels = makeLabelVector(Data);
 		
+		System.out.println (Features.rows + " " + Features.columns + " " + CatSize);
+		
 		SoftmaxCost TrainingCostFunction = new SoftmaxCost(Features,Labels,CatSize,Lambda);
 		
 		ClassifierTheta = new ClassifierTheta(Features.rows,CatSize);
@@ -138,7 +140,10 @@ public class SoftmaxClassifier<F,L>
 		{
 			L label = datum.getLabel();
 			if( !LabelSet.containsKey(label) )
+			{
+				System.err.println ("Label " + label);
 				LabelSet.setCount(label, CatSize++);
+			}
 		}
 		initActivationFunction(CatSize);
 		CatSize -= 1;

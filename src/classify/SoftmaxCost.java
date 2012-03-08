@@ -28,7 +28,8 @@ public class SoftmaxCost extends MemoizedDifferentiableFunction
 		this.Lambda = Lambda;
 		this.CatSize = CatSize;
 		this.FeatureLength = Features.rows;
-		Activation = CatSize > 1 ? new Softmax() :new Sigmoid();
+//		Activation = CatSize > 1 ? new Softmax() :new Sigmoid();
+		Activation = new Softmax ();
 		Gradient = null;
 		initPrevQuery();
 	}
@@ -40,7 +41,8 @@ public class SoftmaxCost extends MemoizedDifferentiableFunction
 		this.Labels = Labels;
 		this.CatSize = Features.columns;
 		this.FeatureLength = Features.rows;
-		Activation = CatSize > 1 ? new Softmax() :new Sigmoid();
+//		Activation = CatSize > 1 ? new Softmax() :new Sigmoid();
+		Activation = new Softmax ();
 		Gradient = null;
 		initPrevQuery();
 	}
@@ -60,6 +62,9 @@ public class SoftmaxCost extends MemoizedDifferentiableFunction
 		ClassifierTheta Theta = new ClassifierTheta(x,FeatureLength,CatSize);
 		
 		DoubleMatrix Input = ((Theta.W.transpose()).mmul(Features)).addColumnVector(Theta.b);
+		
+		System.out.println (Input.rows + " " + Input.columns);
+		
 		DoubleMatrix Sigmoid = Activation.valueAt(Input);
 		DoubleMatrix Diff = Sigmoid.sub(Labels.transpose());
 		

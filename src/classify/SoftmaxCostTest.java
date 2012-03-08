@@ -19,12 +19,13 @@ public class SoftmaxCostTest {
 	@Test
 	public void testDummyData() {
 		String dir = "data/parsed";
+		int numCat = 2;
 		DoubleMatrix features = DoubleMatrix.zeros(2, 100);
 		int[] l = new int[100];
 
 		try 
 		{
-			FileInputStream fstream = new FileInputStream(dir + "/test.txt");
+			FileInputStream fstream = new FileInputStream(dir + "/binary_test.txt");
 			DataInputStream in = new DataInputStream(fstream);
 			BufferedReader br = new BufferedReader(new InputStreamReader(in));
 
@@ -44,7 +45,7 @@ public class SoftmaxCostTest {
 		} catch (Exception e) {
 			System.err.println(e.getMessage());
 		}
-		costfn = new SoftmaxCost(features, l, 1, 1e-6);
+		costfn = new SoftmaxCost(features, l, numCat-1, 1e-6);
 		assertTrue(GradientChecker.check(costfn));
 	}
 	
@@ -72,5 +73,41 @@ public class SoftmaxCostTest {
 		System.out.println("Checking...");
 		
 		assertTrue(GradientChecker.check(TrainingCostFunction));				
+	}
+	
+
+	@Test
+	public void testFournaryData ()
+	{
+		int numItems = 400;
+		int numCat = 4;
+		String dir = "data/parsed";
+		DoubleMatrix features = DoubleMatrix.zeros(2, numItems);
+		int[] l = new int[numItems];
+
+		try 
+		{
+			FileInputStream fstream = new FileInputStream(dir + "/fournary_test.txt");
+			DataInputStream in = new DataInputStream(fstream);
+			BufferedReader br = new BufferedReader(new InputStreamReader(in));
+
+			for (int i = 0; i < numItems; i++) {
+				String[] parts = br.readLine().split(" ");
+				double x = Double.parseDouble(parts[0]);
+				double y = Double.parseDouble(parts[1]);
+				l[i] = Integer.parseInt(parts[2]);
+
+				features.put(0, i, x);
+				features.put(1, i, y);
+			}
+
+			fstream.close();
+			in.close();
+			br.close();
+		} catch (Exception e) {
+			System.err.println(e.getMessage());
+		}
+		costfn = new SoftmaxCost(features, l, numCat-1, 1e-6);
+		assertTrue(GradientChecker.check(costfn));		
 	}
 }
