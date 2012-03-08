@@ -174,11 +174,9 @@ public class DoubleArrays {
 	  {
 		  sum += x[i];
 		  abs_sum += Math.abs(x[i]);
-		  System.out.printf("%.4f\n",x[i]);
+		  System.out.printf("%.8f\n",x[i]);
 	  }
-	  System.out.println(sum);
-	  System.out.println(abs_sum);
-	  System.out.println();
+	  System.out.println("(" + sum + "," + abs_sum +")");	  
   }
   
 }

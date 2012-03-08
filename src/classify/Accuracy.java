@@ -9,7 +9,7 @@ public class Accuracy
 	public Accuracy(int[] Predictions, int[] GoldLabels, int CatSize)
 	{
 		System.err.println(CatSize);
-		DoubleMatrix ConfusionMatrix = DoubleMatrix.zeros(CatSize+1,CatSize+1);
+		DoubleMatrix ConfusionMatrix = DoubleMatrix.zeros(CatSize,CatSize);
 		for(int i=0; i<GoldLabels.length; i++)
 		{
 			double Val = ConfusionMatrix.get(Predictions[i], GoldLabels[i]);
@@ -18,8 +18,8 @@ public class Accuracy
 		System.out.println(ConfusionMatrix);
 		
 		DoubleMatrix Diag = ConfusionMatrix.diag();
-		Precision = ((Diag.div( ConfusionMatrix.columnSums() )).sum()) / (1+CatSize);
-		Recall = ((Diag.div( ConfusionMatrix.rowSums() )).sum()) / (1+CatSize);
+		Precision = ((Diag.div( ConfusionMatrix.columnSums() )).sum()) / (CatSize);
+		Recall = ((Diag.div( ConfusionMatrix.rowSums() )).sum()) / (CatSize);
 		Accuracy = Diag.sum() / ConfusionMatrix.sum();
 		F1 = ( 2 * Precision * Recall ) / (Precision + Recall);
 	}

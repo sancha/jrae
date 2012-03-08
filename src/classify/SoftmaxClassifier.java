@@ -7,6 +7,7 @@ import java.io.Serializable;
 import java.util.*;
 import math.*;
 import org.jblas.*;
+
 import util.Counter;
 
 /**
@@ -23,10 +24,10 @@ public class SoftmaxClassifier<F,L>
 	private final double Lambda = 1e-6;
 	private Counter<L> LabelSet;
 	private DoubleMatrix trainScores, testScores;
+	private SoftmaxCost CostFunction;
 	int CatSize;
 	
 	ClassifierTheta ClassifierTheta;
-	DifferentiableMatrixFunction SigmoidCalc;
 	Minimizer<DifferentiableFunction> minFunc;
 	
 	Accuracy TrainAccuracy, TestAccuracy;
@@ -34,72 +35,45 @@ public class SoftmaxClassifier<F,L>
 	public SoftmaxClassifier( )
 	{
 		LabelSet = new Counter<L>();
-		SigmoidCalc = null;
 		minFunc = new QNMinimizer(10,MaxIterations);
 	}
 	
 	public SoftmaxClassifier(ClassifierTheta ClassifierParams, Set<L> labelSet)
 	{
+		CatSize = 0;
+		
 		LabelSet = new Counter<L>();
 		minFunc = new QNMinimizer(10,MaxIterations);
-		
-		CatSize = 0;
 		for(L label : labelSet)
 			LabelSet.setCount(label, CatSize++);
-		initActivationFunction(CatSize);
-		CatSize -= 1;
 		
 		ClassifierTheta = ClassifierParams;
 		assert CatSize == ClassifierTheta.CatSize;
-	}
-	
-	protected void initActivationFunction(int numCategories)
-	{
-		SigmoidCalc = numCategories > 2 ? new Softmax() :new Sigmoid();
 	}
 	
 	public DoubleMatrix getTrainingResults(List<LabeledDatum<F,L>> Data)
 	{
 		populateLabels(Data);
 		DoubleMatrix Features = makeFeatureMatrix(Data);
+		int FeatureLength = Features.rows;
+		
 		int[] Labels = makeLabelVector(Data);
+		CostFunction = new SoftmaxCost(Features,Labels,CatSize,Lambda);
 		
-		SoftmaxCost TrainingCostFunction = new SoftmaxCost(Features,Labels,CatSize,Lambda);
-		
-		ClassifierTheta = new ClassifierTheta(Features.rows,CatSize);
+		ClassifierTheta = new ClassifierTheta(FeatureLength,CatSize);
 		double[] InitialTheta = ClassifierTheta.Theta;
 		
-		double[] OptimalTheta = minFunc.minimize(TrainingCostFunction, 1e-6, InitialTheta);
-		ClassifierTheta = new ClassifierTheta(OptimalTheta,Features.rows,CatSize);
-		DoubleMatrix W = ClassifierTheta.W, b = ClassifierTheta.b;
-		
-		// Scores is a CatSize by NumExamples Matrix
-		return SigmoidCalc.valueAt( ((W.transpose()).mmul(Features)).addColumnVector(b) );
+		double[] OptimalTheta = minFunc.minimize(CostFunction, 1e-6, InitialTheta);
+		ClassifierTheta = new ClassifierTheta(OptimalTheta,FeatureLength,CatSize);
+		return CostFunction.getPredictions(ClassifierTheta, Features);
 	}
 	
 	public Accuracy train(List<LabeledDatum<F,L>> Data)
-	{
-		populateLabels(Data);
-		DoubleMatrix Features = makeFeatureMatrix(Data);
-		int[] Labels = makeLabelVector(Data);
-		
-		System.out.println (Features.rows + " " + Features.columns + " " + CatSize);
-		
-		SoftmaxCost TrainingCostFunction = new SoftmaxCost(Features,Labels,CatSize,Lambda);
-		
-		ClassifierTheta = new ClassifierTheta(Features.rows,CatSize);
-		double[] InitialTheta = ClassifierTheta.Theta;
-		
-		double[] OptimalTheta = minFunc.minimize(TrainingCostFunction, 1e-6, InitialTheta);
-		ClassifierTheta = new ClassifierTheta(OptimalTheta,Features.rows,CatSize);
-		DoubleMatrix W = ClassifierTheta.W, b = ClassifierTheta.b;
-		
-		// Scores is a CatSize by NumExamples Matrix
-		trainScores = SigmoidCalc.valueAt( ((W.transpose()).mmul(Features)).addColumnVector(b) );
-		trainScores = DoubleMatrix.concatVertically
-							(((trainScores.columnSums()).mul(-1)).add(1), trainScores);
+	{	
+		trainScores = getTrainingResults(Data);
+		int[] GTLabels = makeLabelVector(Data);
 		int[] Predictions = trainScores.columnArgmaxs();
-		TrainAccuracy = new Accuracy(Predictions,Labels,CatSize);
+		TrainAccuracy = new Accuracy(Predictions, GTLabels, CatSize);
 		return TrainAccuracy;
 	}
 	
@@ -107,13 +81,8 @@ public class SoftmaxClassifier<F,L>
 	{
 		DoubleMatrix Features = makeFeatureMatrix(Data);
 		int[] Labels = makeLabelVector(Data);
-		
-		DoubleMatrix W = ClassifierTheta.W, b = ClassifierTheta.b;
-		System.err.println( W.rows + " " + Features.rows);
-		// Scores is a CatSize by NumExamples Matrix
-		testScores = SigmoidCalc.valueAt( ((W.transpose()).mmul(Features)).addColumnVector(b) );
-		testScores = DoubleMatrix.concatVertically
-							(((testScores.columnSums()).mul(-1)).add(1),testScores);
+		CostFunction = new SoftmaxCost (CatSize, ClassifierTheta.FeatureLength, Lambda);
+		testScores = CostFunction.getPredictions(ClassifierTheta,Features);
 		int[] Predictions = testScores.columnArgmaxs();
 		TestAccuracy = new Accuracy(Predictions,Labels,CatSize);
 		return TestAccuracy;
@@ -145,8 +114,7 @@ public class SoftmaxClassifier<F,L>
 				LabelSet.setCount(label, CatSize++);
 			}
 		}
-		initActivationFunction(CatSize);
-		CatSize -= 1;
+		CatSize = LabelSet.keySet().size();
 	}
 	
 	private int[] makeLabelVector(List<LabeledDatum<F,L>> Data)
@@ -164,8 +132,8 @@ public class SoftmaxClassifier<F,L>
 		if( NumExamples == 0 )
 			return null;
 		
-		int FeatureSize = Data.get(0).getFeatures().size(); 
-		double[][] features = new double[FeatureSize][NumExamples];
+		int FeatureLength = Data.get(0).getFeatures().size();
+		double[][] features = new double[FeatureLength][NumExamples];
 		for(int i=0; i<NumExamples; i++)
 		{
 			Collection<F> tf = Data.get(i).getFeatures();
@@ -191,7 +159,7 @@ public class SoftmaxClassifier<F,L>
 	{
 		Collection<F> f = datum.getFeatures();
 		Counter<L> probabilities = new Counter<L>();
-		DoubleMatrix Features = DoubleMatrix.zeros(f.size(), 1);
+		DoubleMatrix Features = DoubleMatrix.zeros(ClassifierTheta.FeatureLength, 1);
 		int i=0;
 		for(F feature : f)
 		{		
@@ -199,11 +167,10 @@ public class SoftmaxClassifier<F,L>
 			i++;
 		}
 		
-		DoubleMatrix W = ClassifierTheta.W, b = ClassifierTheta.b;
+		if (CostFunction == null)
+			CostFunction = new SoftmaxCost (CatSize, ClassifierTheta.FeatureLength, Lambda);
 		
-		// Scores is a CatSize by NumExamples Matrix
-		DoubleMatrix Scores = SigmoidCalc.valueAt( ((W.transpose()).mmul(Features)).addColumnVector(b) );
-		Scores = DoubleMatrix.concatVertically(((Scores.columnSums()).mul(-1)).add(1),Scores);
+		DoubleMatrix Scores = CostFunction.getPredictions(ClassifierTheta, Features);
 		
 		for(L label : LabelSet.keySet())
 		{

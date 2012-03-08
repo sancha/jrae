@@ -45,7 +45,7 @@ public class SoftmaxCostTest {
 		} catch (Exception e) {
 			System.err.println(e.getMessage());
 		}
-		costfn = new SoftmaxCost(features, l, numCat-1, 1e-6);
+		costfn = new SoftmaxCost(features, l, numCat, 1e-6);
 		assertTrue(GradientChecker.check(costfn));
 	}
 	
@@ -55,7 +55,7 @@ public class SoftmaxCostTest {
 		String dir = "data/parsed";
 		LabeledDataSet<LabeledDatum<Integer,Integer>,Integer,Integer> Dataset = new MatProcessData(dir);
 		
-		int CatSize = Dataset.getCatSize()-1;
+		int CatSize = Dataset.getCatSize();
 	
 		FileInputStream fis = new FileInputStream("data/parsed/features.dat");
 		ObjectInputStream ois = new ObjectInputStream(fis);
@@ -107,7 +107,7 @@ public class SoftmaxCostTest {
 		} catch (Exception e) {
 			System.err.println(e.getMessage());
 		}
-		costfn = new SoftmaxCost(features, l, numCat-1, 1e-6);
+		costfn = new SoftmaxCost(features, l, numCat, 0);
 		assertTrue(GradientChecker.check(costfn));		
 	}
 }

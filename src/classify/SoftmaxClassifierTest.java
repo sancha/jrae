@@ -8,8 +8,10 @@ import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
-import java.util.Random;
 
+import math.DoubleArrays;
+
+import org.jblas.DoubleMatrix;
 import org.junit.Test;
 
 
@@ -54,13 +56,9 @@ public class SoftmaxClassifierTest {
 		for(int i=0; i<10; i++)
 		{
 			Accuracy a = c.train(Dataset.Data);
-			if( a.Accuracy == 1.0 )
-			{
-				assertTrue(Boolean.TRUE);
-				return;
-			}
+			System.out.println(a);
+			assertTrue(a.Accuracy == 1.0);
 		}
-		assertTrue(Boolean.FALSE);
 	}
 	
 	@Test
@@ -100,12 +98,23 @@ public class SoftmaxClassifierTest {
 		{
 			Accuracy a = c.train(Dataset.Data);
 			System.out.println(a);
-			if( a.Accuracy == 1.0 )
-			{
-				assertTrue(Boolean.TRUE);
-				return;
-			}
+			assertTrue( a.Accuracy == 1.0 );
 		}
-		assertTrue(Boolean.FALSE);
+	}
+	
+	@Test
+	public void testClassifierTheta() throws Exception
+	{
+		int FeatureLength = 10;
+		int CatSize = 3;
+		DoubleMatrix W = DoubleMatrix.rand(FeatureLength,CatSize-1);
+		DoubleMatrix b = DoubleMatrix.rand(CatSize-1,1);
+		
+		ClassifierTheta C = new ClassifierTheta(W, b);
+		ClassifierTheta D = new ClassifierTheta(C.Theta, FeatureLength, CatSize);
+		ClassifierTheta E = new ClassifierTheta(D.W, D.b);
+		
+		assertTrue (new DoubleMatrix(DoubleArrays.subtract(C.Theta, D.Theta)).sum() == 0);
+		assertTrue (new DoubleMatrix(DoubleArrays.subtract(C.Theta, E.Theta)).sum() == 0);
 	}
 }

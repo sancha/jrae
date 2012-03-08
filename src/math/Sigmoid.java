@@ -22,5 +22,4 @@ public class Sigmoid extends DifferentiableMatrixFunction{
 		DoubleMatrix M = valueAt(X);
 		return M.mul( (M.mul(-1)).addi(1) );
 	}
-	
 }
