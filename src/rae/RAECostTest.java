@@ -27,7 +27,7 @@ public class RAECostTest {
 		dataset.add( new ReviewDatum(new String[]{"tmp2"}, 1, 1, data2));
 		double[] lambda = new double[]{1e-05, 0.0001, 1e-05, 0.01};
 		
-		RAECost cost = new RAECost(alphaCat, 1, beta, DictionarySize, hiddenSize, hiddenSize, 
+		RAECost cost = new RAECost(alphaCat, 2, beta, DictionarySize, hiddenSize, hiddenSize, 
 				lambda, DoubleMatrix.zeros(hiddenSize, DictionarySize), dataset, null, f);
 		
 		assertTrue( GradientChecker.check(cost) );

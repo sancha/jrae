@@ -1,9 +1,7 @@
 package classify;
 
 import math.*;
-
 import org.jblas.*;
-
 import util.*;
 
 public class SoftmaxCost extends MemoizedDifferentiableFunction
@@ -77,7 +75,15 @@ public class SoftmaxCost extends MemoizedDifferentiableFunction
 		int numDataItems = Features.columns;
 		DoubleMatrix Input = ((Theta.W.transpose()).mmul(Features)).addColumnVector(Theta.b);
 		Input = DoubleMatrix.concatVertically(Input, DoubleMatrix.zeros(1,numDataItems));
-		return Activation.valueAt(Input);		
+		return Activation.valueAt (Input);		
+	}
+	
+	public DoubleMatrix getGradient (ClassifierTheta Theta, DoubleMatrix Features)
+	{
+		int numDataItems = Features.columns;
+		DoubleMatrix Input = ((Theta.W.transpose()).mmul(Features)).addColumnVector(Theta.b);
+		Input = DoubleMatrix.concatVertically(Input, DoubleMatrix.zeros(1,numDataItems));
+		return Activation.derivativeAt (Input);		
 	}
 	
 	private double getNetLogLoss (DoubleMatrix Prediction, DoubleMatrix Labels)
