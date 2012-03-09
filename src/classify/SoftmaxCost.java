@@ -146,7 +146,7 @@ public class SoftmaxCost extends MemoizedDifferentiableFunction
 		Input = DoubleMatrix.concatVertically(Input, DoubleMatrix.zeros(1,1));
 		DoubleMatrix Prediction = Activation.valueAt(Input);
 		DoubleMatrix Diff = Prediction.sub(Labels);
-	    DoubleMatrix Delta = Features.mmul(Diff.transpose());
+	    DoubleMatrix Delta = dataItem.mmul(Diff.transpose());
 	
 	    DoubleMatrix gradW = Delta.getColumns(requiredEntries);
 	    DoubleMatrix gradb = ((Diff.rowSums()).getRows(requiredEntries));

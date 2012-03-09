@@ -337,8 +337,8 @@ public class RAEPropagation {
 
 				DoubleMatrix Activation = ((theta.W3.transpose()).mmul(ND1))
 						.addi((theta.W4.transpose()).mmul(ND2))
-						.addi(((NodeW.transpose()).mmul(PD))
-						.addi((theta.Wcat.transpose()).mmul(CurrentNode.catDelta)));
+						.addi(((NodeW.transpose()).mmul(PD)));
+//						.addi((theta.Wcat.transpose()).mmul(CurrentNode.catDelta)));
 				Activation.subi(delta);
 				DoubleMatrix CurrentDelta = f.derivativeAt(A1).mmul(Activation);
 
@@ -351,18 +351,18 @@ public class RAEPropagation {
 					GW3_upd = ND1.mmul(A1Norm.transpose()),
 					GW4_upd = ND2.mmul(A1Norm.transpose());
 				
-				ClassifierTheta GTheta = new ClassifierTheta (CurrentNode.catDelta, HiddenSize, CatSize);
+				ClassifierTheta GTheta = new ClassifierTheta (CurrentNode.catDelta, HiddenSize, 1+CatSize);
 				accumulate(GW1_upd, GW2_upd, GW3_upd, GW4_upd, CurrentDelta, ND1, ND2, 
 						GTheta.getW(), GTheta.getb());				
 				
 			} else {
-				ClassifierTheta GTheta = new ClassifierTheta (CurrentNode.catDelta, HiddenSize, CatSize);
+				ClassifierTheta GTheta = new ClassifierTheta (CurrentNode.catDelta, HiddenSize, 1+CatSize);
 				accumulate(GTheta.getW(), GTheta.getb());
 				
 				DoubleMatrixFunctions.IncrementColumn(GL, CurrentNode.NodeName,
 						(((NodeW.transpose()).mmul(CurrentNode.ParentDelta))
-							.addi(theta.Wcat.transpose().mmul(CurrentNode.catDelta)))
-							.subi(delta));
+//							.addi(theta.Wcat.transpose().mmul(CurrentNode.catDelta)))
+							.subi(delta)));
 			}
 		}
 
