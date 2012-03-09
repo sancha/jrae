@@ -34,13 +34,15 @@ public class RAECostTest {
 		
 		DoubleMatrix xMat = DoubleMatrix.ones(cost.dimension(),1).mul(0.1);
 		
-		assertTrue( Math.abs(cost.valueAt(xMat.data)-0.5257024003476533) < 1e-10 );
+		double val = cost.valueAt(xMat.data);
+		System.out.println (val);
+		assertTrue( Math.abs(val-0.5257024003476533) < 1e-10 );
 		
-		Random rgen = new Random(0);
-		xMat = DoubleMatrix.ones(cost.dimension(),1);
-		for (int i=0; i<xMat.rows; i++)
-			xMat.put(i, 0, rgen.nextDouble());
-		DoubleArrays.prettyPrint(cost.derivativeAt(xMat.data));
+//		Random rgen = new Random(0);
+//		xMat = DoubleMatrix.ones(cost.dimension(),1);
+//		for (int i=0; i<xMat.rows; i++)
+//			xMat.put(i, 0, rgen.nextDouble());
+//		DoubleArrays.prettyPrint(cost.derivativeAt(xMat.data));
 	}
 
 }

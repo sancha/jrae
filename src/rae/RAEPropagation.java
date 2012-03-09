@@ -3,6 +3,9 @@ package rae;
 import math.*;
 
 import org.jblas.*;
+
+import classify.ClassifierTheta;
+import classify.SoftmaxCost;
 import util.*;
 import java.util.*;
 
@@ -164,30 +167,27 @@ public class RAEPropagation {
 		int TreeSize = 2 * SentenceLength - 1;
 		LabeledRAETree tree = new LabeledRAETree(SentenceLength, CurrentLabel, HiddenSize, CatSize, WordsEmbedded);
 		int[] SubtreeSize = new int[TreeSize];
-		DoubleMatrix labelVector = makeLabelVector (CurrentLabel);
+		int[] singleLabel = new int[]{CurrentLabel};
+		int[] labelVector = makeLabelVector (CurrentLabel, SentenceLength);
 		
 		for (int i = SentenceLength; i < TreeSize; i++) {
 			int LeftChild = TreeStructure.get(i).getFirst(), 
 				RightChild = TreeStructure.get(i).getSecond();
-
 			SubtreeSize[i] = SubtreeSize[LeftChild] + SubtreeSize[RightChild];
 		}
-
-		// classifier on single words
-		DifferentiableMatrixFunction SigmoidCalc = CatSize > 1 ? new Softmax() : new Sigmoid();
 		
-		DoubleMatrix Input = theta.Wcat.mmul(WordsEmbedded).addColumnVector(theta.bcat);
-		DoubleMatrix SM = SigmoidCalc.valueAt(Input);
-		DoubleMatrix Diff = SM.sub(CurrentLabel);
-		DoubleMatrix SquaredError = (Diff.mul(Diff)).mul((1 - AlphaCat) * 0.5f);
-		DoubleMatrix ErrorGradient = Diff.mul(1 - AlphaCat).mul(SigmoidCalc.derivativeAt(Input));
-
+		//We'll do the regularization manually later
+		SoftmaxCost classifierCost = new SoftmaxCost (1+CatSize, HiddenSize, 0);
+		ClassifierTheta classifierParams = theta.getClassifierParameters();
+		DoubleMatrix Error = classifierCost.getLogLoss(classifierParams, WordsEmbedded, labelVector);
+		
 		for (int i = 0; i < TreeSize; i++) {
 			Node CurrentNode = tree.T[i];
 			if (i < SentenceLength) {
-				CurrentNode.scores = SquaredError.getColumn(i).data;
-				CurrentNode.catDelta = ErrorGradient.getColumn(i);
-				tree.TotalScore += SquaredError.getColumn(i).sum();
+				CurrentNode.scores = Error.getColumn(i).data;
+				CurrentNode.catDelta = classifierCost
+						.derivativeFor (classifierParams, WordsEmbedded.getColumn(i), singleLabel);
+				tree.TotalScore += DoubleArrays.total(CurrentNode.scores);
 			} else {
 				int LeftChild = TreeStructure.get(i).getFirst(), RightChild = TreeStructure
 						.get(i).getSecond();
@@ -208,14 +208,11 @@ public class RAEPropagation {
 				CurrentNode.UnnormalizedFeatures = p;
 				CurrentNode.Features = pNorm1;
 
-				// Eq. (7) in the paper (for special case of 1d label)
-				Input = (theta.Wcat.mmul(pNorm1)).addColumnVector(theta.bcat);
-				SM = SigmoidCalc.valueAt(Input);
-				Diff = SM.subColumnVector(labelVector);
-				CurrentNode.catDelta = (Diff.mul(Beta * (1 - AlphaCat)))
-												.mul(SigmoidCalc.derivativeAt(Input));
-				CurrentNode.scores = SM.data;
-				tree.TotalScore += DoubleMatrixFunctions.SquaredNorm(Diff) * 0.5 * Beta * (1 - AlphaCat);
+				CurrentNode.catDelta = classifierCost
+						.derivativeFor (classifierParams, CurrentNode.Features, singleLabel);
+				CurrentNode.scores = classifierCost
+						.getLogLoss (classifierParams, CurrentNode.Features, singleLabel).data;
+				tree.TotalScore += 
 
 				CurrentNode.SubtreeSize = SubtreeSize[i];
 			}
@@ -269,8 +266,8 @@ public class RAEPropagation {
 				DoubleMatrix PD = CurrentNode.ParentDelta;
 
 				DoubleMatrix Activation = ((theta.W3.transpose()).mmul(ND1))
-						.addi((theta.W4.transpose()).mmul(ND2));
-				Activation = Activation.addi(((NodeW.transpose()).mmul(PD))
+						.addi((theta.W4.transpose()).mmul(ND2))
+						.addi(((NodeW.transpose()).mmul(PD))
 						.subi(delta));
 				DoubleMatrix CurrentDelta = f.derivativeAt(A1).mmul(Activation);
 
@@ -339,9 +336,9 @@ public class RAEPropagation {
 				DoubleMatrix PD = CurrentNode.ParentDelta;
 
 				DoubleMatrix Activation = ((theta.W3.transpose()).mmul(ND1))
-						.addi((theta.W4.transpose()).mmul(ND2));
-				Activation.addi(((NodeW.transpose()).mmul(PD)).addi((theta.Wcat
-						.transpose()).mmul(CurrentNode.catDelta)));
+						.addi((theta.W4.transpose()).mmul(ND2))
+						.addi(((NodeW.transpose()).mmul(PD))
+						.addi((theta.Wcat.transpose()).mmul(CurrentNode.catDelta)));
 				Activation.subi(delta);
 				DoubleMatrix CurrentDelta = f.derivativeAt(A1).mmul(Activation);
 
@@ -352,31 +349,30 @@ public class RAEPropagation {
 					GW1_upd = CurrentDelta.mmul(CurrentNode.LeftChild.Features.transpose()),
 					GW2_upd = CurrentDelta.mmul(CurrentNode.RightChild.Features.transpose()),
 					GW3_upd = ND1.mmul(A1Norm.transpose()),
-					GW4_upd = ND2.mmul(A1Norm.transpose()),
-					GWCat_upd = CurrentNode.catDelta.mmul(A1Norm.transpose());
+					GW4_upd = ND2.mmul(A1Norm.transpose());
 				
+				ClassifierTheta GTheta = new ClassifierTheta (CurrentNode.catDelta, HiddenSize, CatSize);
 				accumulate(GW1_upd, GW2_upd, GW3_upd, GW4_upd, CurrentDelta, ND1, ND2, 
-												GWCat_upd, CurrentNode.catDelta);				
+						GTheta.getW(), GTheta.getb());				
 				
 			} else {
-				accumulate(CurrentNode.catDelta.mmul(CurrentNode.Features.transpose()), 
-																	CurrentNode.catDelta);
+				ClassifierTheta GTheta = new ClassifierTheta (CurrentNode.catDelta, HiddenSize, CatSize);
+				accumulate(GTheta.getW(), GTheta.getb());
 				
 				DoubleMatrixFunctions.IncrementColumn(GL, CurrentNode.NodeName,
 						(((NodeW.transpose()).mmul(CurrentNode.ParentDelta))
 							.addi(theta.Wcat.transpose().mmul(CurrentNode.catDelta)))
-						.subi(delta));
+							.subi(delta));
 			}
 		}
 
 		incrementWordEmbedding(GL,WordsIndexed);
 	}
 	
-	private DoubleMatrix makeLabelVector (int label)
+	private int[] makeLabelVector (int label, int size)
 	{
-		DoubleMatrix labelVector = DoubleMatrix.zeros (CatSize);
-		if (label > 0 && label <= CatSize)
-			labelVector.put(label-1, 0, 1);
+		int[] labelVector = new int[size];
+		Arrays.fill(labelVector, label);
 		return labelVector;
 	}
 	

@@ -112,7 +112,7 @@ public class SoftmaxClassifierTest {
 		
 		ClassifierTheta C = new ClassifierTheta(W, b);
 		ClassifierTheta D = new ClassifierTheta(C.Theta, FeatureLength, CatSize);
-		ClassifierTheta E = new ClassifierTheta(D.W, D.b);
+		ClassifierTheta E = new ClassifierTheta(D.getW(), D.b);
 		
 		assertTrue (new DoubleMatrix(DoubleArrays.subtract(C.Theta, D.Theta)).sum() == 0);
 		assertTrue (new DoubleMatrix(DoubleArrays.subtract(C.Theta, E.Theta)).sum() == 0);

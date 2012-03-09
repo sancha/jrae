@@ -113,11 +113,11 @@ class Structure extends ArrayList<Pair<Integer,Integer>>
 class Node {
 	Node parent, LeftChild, RightChild;
 	int NodeName, SubtreeSize;
-	double[] scores; //, Freq;
+	double[] catDelta, scores; //, Freq;
 	DoubleMatrix UnnormalizedFeatures, 
 		Features, LeafFeatures, Z, 
 		DeltaOut1, DeltaOut2, ParentDelta, 
-		catDelta, dW1, dW2, dW3, dW4, dL, Y1C1, Y2C2;
+		dW1, dW2, dW3, dW4, dL, Y1C1, Y2C2;
 	
 	/**
 	 * Specialized Constructor for fitting in that list

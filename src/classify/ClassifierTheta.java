@@ -7,7 +7,8 @@ import org.jblas.*;
 public class ClassifierTheta implements Serializable{
 	private static final long serialVersionUID = -687919927781459921L;
 	
-	DoubleMatrix W,b;
+	DoubleMatrix W;
+	DoubleMatrix b;
 	double[] Theta;
 	int FeatureLength;
 	/**
@@ -22,7 +23,7 @@ public class ClassifierTheta implements Serializable{
 		CatSize--;
 		this.FeatureLength = FeatureLength;
 		this.CatSize = CatSize;
-		W = DoubleMatrix.rand(FeatureLength,CatSize).subi(0.5);
+		this.W = DoubleMatrix.rand(FeatureLength,CatSize).subi(0.5);
 		b = DoubleMatrix.rand(CatSize,1).subi(0.5);
 		Theta = new double[ FeatureLength * CatSize + CatSize ];
 		flatten();
@@ -53,16 +54,28 @@ public class ClassifierTheta implements Serializable{
 		build ();
 	}
 	
+	public double[] getParams ()
+	{
+		return Theta;
+	}
+	
 	public void flatten ()
 	{
-		System.arraycopy(W.data, 0, Theta, 0, FeatureLength * CatSize);
+		System.arraycopy(getW().data, 0, Theta, 0, FeatureLength * CatSize);
 		System.arraycopy(b.data, 0, Theta, FeatureLength * CatSize, CatSize);
 	}
 	
 	private void build ()
 	{
-		System.arraycopy(Theta, 0, W.data, 0, FeatureLength * CatSize);
+		System.arraycopy(Theta, 0, getW().data, 0, FeatureLength * CatSize);
 		System.arraycopy(Theta, FeatureLength * CatSize, b.data, 0, CatSize);
 	}
+
+	public DoubleMatrix getW() {
+		return W;
+	}
 	
+	public DoubleMatrix getb() {
+		return b;
+	}
 }
