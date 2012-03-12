@@ -11,8 +11,8 @@ public class GradientChecker {
 		int attempts = 10;
 		while( attempts > 0 )
 		{
-//			DoubleMatrix xMat = DoubleMatrix.rand(size);
-			DoubleMatrix xMat = attempts != 10 ? DoubleMatrix.rand(size) : DoubleMatrix.ones(size).mul(0.1);
+			DoubleMatrix xMat = DoubleMatrix.rand(size);
+//			DoubleMatrix xMat = attempts != 10 ? DoubleMatrix.rand(size) : DoubleMatrix.ones(size).mul(0.1);
 			double[] x = xMat.data;
 			double ReturnedCost = Func.valueAt(x);
 			double[] ReturnedGradient = Func.derivativeAt(x);
@@ -34,6 +34,8 @@ public class GradientChecker {
 			for(int i=0; i<size; i++)
 			{
 				diff = Math.abs( NumericalGradient[i] - ReturnedGradient[i] );
+				if (diff > 1e-5)
+					System.out.println (i + "-" + diff +" "+ NumericalGradient[i] + " " + ReturnedGradient[i]);
 				maxDiff = Math.max(diff, maxDiff);
 				totalDiff += diff;
 			}

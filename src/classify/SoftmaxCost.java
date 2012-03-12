@@ -10,27 +10,18 @@ public class SoftmaxCost extends MemoizedDifferentiableFunction
 	DifferentiableMatrixFunction Activation;
 	ClassifierTheta Gradient;
 	double Lambda;
-	int CatSize, numDataItems, FeatureLength;
+	int CatSize, FeatureLength;
 	
 	public SoftmaxCost(DoubleMatrix Features, int[] Labels, int CatSize, double Lambda)
 	{
 		this.CatSize = CatSize;
 		FeatureLength = Features.rows;
-		numDataItems = Features.columns;
-		assert numDataItems == Labels.length;
-		
-		this.Labels = DoubleMatrix.zeros(CatSize,numDataItems);
-		for(int i=0; i<Labels.length; i++)
-		{
-			if( Labels[i] < 0 || Labels[i] > CatSize )
-				System.err.println("Bad Data : " + Labels[i] + " | " + i);
-			else
-				this.Labels.put(Labels[i],i,1);
-		}
+
 		this.Features = Features;
 		this.Lambda = Lambda;
-		
+		this.Labels = getLabelRepresentation(Labels);
 		Activation = CatSize > 1 ? new Softmax() :new Sigmoid();
+//		Activation = new Softmax();
 		Gradient = null;
 		initPrevQuery();
 	}
@@ -42,8 +33,8 @@ public class SoftmaxCost extends MemoizedDifferentiableFunction
 		this.Labels = Labels;
 		CatSize = Labels.rows;
 		FeatureLength = Features.rows;
-		numDataItems = Features.columns;
 		Activation = CatSize > 1 ? new Softmax() :new Sigmoid();
+//		Activation = new Softmax();
 		Gradient = null;
 		initPrevQuery();
 	}
@@ -53,14 +44,13 @@ public class SoftmaxCost extends MemoizedDifferentiableFunction
 		Features = null;
 		Labels = null;
 		Gradient = null;
-		numDataItems = -1;
 		
 		this.Lambda = Lambda;
 		this.CatSize = CatSize;
 		this.FeatureLength = FeatureLength;
 		
 		Activation = CatSize > 1 ? new Softmax() :new Sigmoid();
-		
+//		Activation = new Softmax();
 		initPrevQuery();
 	}
 	
@@ -69,26 +59,40 @@ public class SoftmaxCost extends MemoizedDifferentiableFunction
 	{
 		return (CatSize - 1) * (FeatureLength + 1);
 	}
-	
+
+	/**
+	* Finds the predicted labels for input data as parameterized by ClassifierTheta
+	* @param Theta Classifier parameters
+	* @param Features Input Data of dimensions featureLenght by numDataItems
+	* @return A Prediction matrix of numCategories by numDataItems Matrix of predictions
+	*/	
 	public DoubleMatrix getPredictions (ClassifierTheta Theta, DoubleMatrix Features)
 	{
+//		DoubleArrays.prettyPrint(Theta.Theta);
 		int numDataItems = Features.columns;
 		DoubleMatrix Input = ((Theta.W.transpose()).mmul(Features)).addColumnVector(Theta.b);
 		Input = DoubleMatrix.concatVertically(Input, DoubleMatrix.zeros(1,numDataItems));
-		return Activation.valueAt (Input);		
+		return Activation.valueAt(Input); 
 	}
 	
-	public DoubleMatrix getGradient (ClassifierTheta Theta, DoubleMatrix Features)
+	public DoubleMatrix getGradient (ClassifierTheta Theta, DoubleMatrix Features, DoubleMatrix Labels)
 	{
-		int numDataItems = Features.columns;
-		DoubleMatrix Input = ((Theta.W.transpose()).mmul(Features)).addColumnVector(Theta.b);
-		Input = DoubleMatrix.concatVertically(Input, DoubleMatrix.zeros(1,numDataItems));
-		return Activation.derivativeAt (Input);		
+//		int[] requiredRows = ArraysHelper.makeArray(0, CatSize-2);
+		
+//		DoubleArrays.prettyPrint(Theta.Theta);
+		
+		int numDataItems = Labels.length;
+		DoubleMatrix Prediction = getPredictions (Theta, Features);
+//		double MeanTerm = 1.0 / (double) numDataItems;
+		DoubleMatrix Diff = Prediction.sub(Labels); //.muli(MeanTerm);
+	    return Diff; //.getRows(requiredRows);	
 	}
 	
-	private double getNetLogLoss (DoubleMatrix Prediction, DoubleMatrix Labels)
+	public DoubleMatrix getLoss (DoubleMatrix Prediction, DoubleMatrix Labels)
 	{
-		return -MatrixFunctions.log((Labels.mul(Prediction)).columnSums()).sum();
+		DoubleMatrix logLoss = MatrixFunctions.log((Labels.mul(Prediction)).columnSums()).muli(-1);
+//		DoubleMatrixFunctions.prettyPrint(logLoss);
+		return logLoss;
 	}
 
 	@Override
@@ -96,16 +100,18 @@ public class SoftmaxCost extends MemoizedDifferentiableFunction
 	{
 		if( !requiresEvaluation(x) )
 			return value;
+		int numDataItems = Features.columns;
 		
 		int[] requiredRows = ArraysHelper.makeArray(0, CatSize-2);
 		ClassifierTheta Theta = new ClassifierTheta(x,FeatureLength,CatSize);
-		
-		DoubleMatrix Input = ((Theta.W.transpose()).mmul(Features)).addColumnVector(Theta.b);
-		Input = DoubleMatrix.concatVertically(Input, DoubleMatrix.zeros(1,numDataItems));
-		DoubleMatrix Prediction = Activation.valueAt(Input);
+//		
+//		DoubleMatrix Input = ((Theta.W.transpose()).mmul(Features)).addColumnVector(Theta.b);
+//		Input = DoubleMatrix.concatVertically(Input, DoubleMatrix.zeros(1,numDataItems));
+		DoubleMatrix Prediction = getPredictions (Theta, Features);
+//		Activation.valueAt(Input);
 		
 		double MeanTerm = 1.0 / (double) numDataItems;
-		double Cost = getNetLogLoss (Prediction, Labels) * MeanTerm; 
+		double Cost = getLoss (Prediction, Labels).sum() * MeanTerm; 
 		double RegularisationTerm = 0.5 * Lambda * DoubleMatrixFunctions.SquaredNorm(Theta.W);
 		
 		DoubleMatrix Diff = Prediction.sub(Labels).muli(MeanTerm);
@@ -113,12 +119,17 @@ public class SoftmaxCost extends MemoizedDifferentiableFunction
 	
 	    DoubleMatrix gradW = Delta.getColumns(requiredRows);
 	    DoubleMatrix gradb = ((Diff.rowSums()).getRows(requiredRows));
+//	    DoubleMatrix gradW = Features.mmul(Diff.transpose()).getColumns(requiredRows);
+	    
+//	    System.err.println (gradW.sub(gradWW).sum());
+	    
+	    DoubleMatrixFunctions.prettyPrint(gradW);
 	    
 	    if (gradW.rows != Theta.W.rows)
-	    	System.err.println ("W FAIL 1");
+	    	System.err.println ("W FAIL 1" + gradW.rows +" "+ Theta.W.rows);
 	    
 	    if (gradW.columns != Theta.W.columns)
-	    	System.err.println ("W FAIL 2");
+	    	System.err.println ("W FAIL 2"+gradW.columns+ " " + Theta.W.columns);
 	    
 	    if (gradb.rows != Theta.b.rows || gradb.columns != Theta.b.columns)
 	    	System.err.println ("b FAIL");
@@ -130,5 +141,20 @@ public class SoftmaxCost extends MemoizedDifferentiableFunction
 	    value = Cost + RegularisationTerm;
 	    gradient = Gradient.Theta;
 		return value; 
+	}
+	
+	public DoubleMatrix getLabelRepresentation (int[] Labels)
+	{
+//		System.err.println (CatSize);
+		int numDataItems = Labels.length;
+		DoubleMatrix LabelRep = DoubleMatrix.zeros(CatSize,numDataItems);
+		for(int i=0; i<Labels.length; i++)
+		{
+			if( Labels[i] < 0 || Labels[i] > CatSize )
+				System.err.println("Bad Data : " + Labels[i] + " | " + i);
+			else
+				LabelRep.put(Labels[i],i,1);
+		}
+		return LabelRep;
 	}
 }

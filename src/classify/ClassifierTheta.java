@@ -65,4 +65,11 @@ public class ClassifierTheta implements Serializable{
 		System.arraycopy(Theta, FeatureLength * CatSize, b.data, 0, CatSize);
 	}
 	
+	public DoubleMatrix getW(){
+		return W;
+	}
+	
+	public DoubleMatrix getb(){
+		return b;
+	}
 }

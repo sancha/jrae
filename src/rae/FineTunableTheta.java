@@ -145,5 +145,13 @@ public class FineTunableTheta extends Theta{
 		super.fixIndices();
 		Wbegins[5] = bends[2] + 1;		Wends[5] = Wbegins[5] + CatSize * hiddenSize -1;	//Wcat
 		bbegins[5] = Wends[5] + 1;		bends[5] = bbegins[5] + CatSize - 1;				//bcat		
+	
+//		for(int i=0; i<=5; i++)
+//			System.out.println (Wbegins[i] + " " + Wends[i]);
+//		System.out.println ("----");
+//		for(int i=0; i<=5; i++)
+//			System.out.println (bbegins[i] + " " + bends[i]);		
+//		System.out.println ("----");
+//		System.out.println ("----");
 	}
 }

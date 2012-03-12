@@ -32,12 +32,13 @@ public abstract class DoubleMatrixFunctions {
 	
 	public static void prettyPrint(DoubleMatrix inp)
 	{
-		for(int i=0; i< Math.min(5,inp.rows); i++)
+		System.out.println(">>");
+		for(int i=0; i< Math.min(Integer.MAX_VALUE,inp.rows); i++)
 		{
-			for(int j=0; j< Math.min(5,inp.columns); j++)
+			for(int j=0; j< Math.min(Integer.MAX_VALUE,inp.columns); j++)
 				System.out.printf("%.4f ", inp.get(i, j));
 			System.out.println();
 		}
-		System.out.println();System.out.println();
+		System.out.println("<<");
 	}
 }

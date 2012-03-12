@@ -4,7 +4,9 @@ import static org.junit.Assert.*;
 import io.*;
 
 import java.io.*;
+import java.util.Random;
 
+import math.DoubleArrays;
 import math.GradientChecker;
 
 import org.jblas.DoubleMatrix;
@@ -16,7 +18,7 @@ import util.ArraysHelper;
 public class SoftmaxCostTest {
 	SoftmaxCost costfn;
 	
-	@Test
+//	@Test
 	public void testDummyData() {
 		String dir = "data/parsed";
 		int numCat = 2;
@@ -47,9 +49,12 @@ public class SoftmaxCostTest {
 		}
 		costfn = new SoftmaxCost(features, l, numCat, 1e-6);
 		assertTrue(GradientChecker.check(costfn));
+		
+//		SoftmaxReconstructionCost recostfn = new SoftmaxReconstructionCost(numCat, features, l);
+//		assertTrue(GradientChecker.check(recostfn));
 	}
 	
-	@Test
+//	@Test
 	public void testRealData() throws IOException, ClassNotFoundException
 	{
 		String dir = "data/parsed";
@@ -72,14 +77,17 @@ public class SoftmaxCostTest {
 		
 		System.out.println("Checking...");
 		
-		assertTrue(GradientChecker.check(TrainingCostFunction));				
+		assertTrue(GradientChecker.check(TrainingCostFunction));
+		
+//		SoftmaxReconstructionCost recostfn = new SoftmaxReconstructionCost(CatSize, features, Labels);
+//		assertTrue(GradientChecker.check(recostfn));
 	}
 	
 
-	@Test
+//	@Test
 	public void testFournaryData ()
 	{
-		int numItems = 400;
+		int numItems = 1;
 		int numCat = 4;
 		String dir = "data/parsed";
 		DoubleMatrix features = DoubleMatrix.zeros(2, numItems);
@@ -108,6 +116,35 @@ public class SoftmaxCostTest {
 			System.err.println(e.getMessage());
 		}
 		costfn = new SoftmaxCost(features, l, numCat, 0);
-		assertTrue(GradientChecker.check(costfn));		
+		assertTrue(GradientChecker.check(costfn));
+		
+//		SoftmaxReconstructionCost recostfn = new SoftmaxReconstructionCost(numCat, features, l);
+//		assertTrue(GradientChecker.check(recostfn));
+	}
+	
+	@Test
+	public void testAnother ()
+	{
+		double[][] f = 
+				{{0.701039,0.366361,0.671759,0.297568,0.449285,0.453154,0.449638,0.297568,0.366361,0.452110},
+				{0.745353,0.477637,0.740417,0.428904,0.440570,0.436850,0.440844,0.428904,0.477637,0.437994},
+				{0.607288,0.703970,0.894435,0.687552,0.449640,0.455082,0.450274,0.687552,0.703970,0.454983},
+				{0.235082,0.322768,0.579958,0.408496,0.447331,0.442386,0.446858,0.408496,0.322768,0.440377},
+				{0.389043,0.011655,0.510755,0.353052,0.449177,0.448340,0.448390,0.353052,0.011655,0.450352}};
+		DoubleMatrix features = new DoubleMatrix (f);
+		int[] labels = {0,0,0,0,0,0,0,1,1,1};
+		
+		costfn = new SoftmaxCost(features, labels, 3, 0);
+//		assertTrue(GradientChecker.check(costfn));		
+		System.err.println (costfn.dimension());
+		
+//		Random rgen = new Random(0);
+//		DoubleMatrix yMat = DoubleMatrix.ones(costfn.dimension(),1);
+//		for (int i=0; i<yMat.rows; i++)
+//			yMat.put(i, 0, (double)(i+1)/10.0);
+		double[] shu = {0.1,0.3,0.5,0.7,0.9,0.2,0.4,0.6,0.8,1.0,1.1,1.2};
+		System.err.println (costfn.valueAt (shu));
+		
+		DoubleArrays.prettyPrint(costfn.derivativeAt (shu));
 	}
 }

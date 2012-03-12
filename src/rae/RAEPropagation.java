@@ -7,6 +7,7 @@ import org.jblas.*;
 import classify.ClassifierTheta;
 import classify.SoftmaxCost;
 import util.*;
+
 import java.util.*;
 
 public class RAEPropagation {
@@ -168,7 +169,12 @@ public class RAEPropagation {
 		LabeledRAETree tree = new LabeledRAETree(SentenceLength, CurrentLabel, HiddenSize, CatSize, WordsEmbedded);
 		int[] SubtreeSize = new int[TreeSize];
 		int[] requiredEntries = ArraysHelper.makeArray(0, CatSize-1);
-		DoubleMatrix Labels = makeLabelVector (CurrentLabel, SentenceLength);
+		
+		SoftmaxCost softmaxCalc = new SoftmaxCost (1+CatSize, HiddenSize, 0);
+		ClassifierTheta ClassifierTheta = theta.getClassifierParameters();
+		int[] labelVector = new int[SentenceLength];
+		Arrays.fill(labelVector, CurrentLabel);
+		DoubleMatrix Labels = softmaxCalc.getLabelRepresentation(labelVector);
 		DoubleMatrix LabelVector = Labels.getColumn(0); 
 		
 		for (int i = SentenceLength; i < TreeSize; i++) {
@@ -179,20 +185,33 @@ public class RAEPropagation {
 		}
 
 		// We only use Soft-max to get the prediction, the error is calculated differently!
-		SoftmaxCost softmaxCalc = new SoftmaxCost (CatSize, HiddenSize, 0);
-		ClassifierTheta ClassifierTheta = theta.getClassifierParameters();
-		DoubleMatrix Predictions = softmaxCalc.getPredictions(ClassifierTheta, WordsEmbedded);
-		DoubleMatrix Diff = Predictions.sub(Labels);
-		DoubleMatrix SquaredError = (Diff.mul(Diff)).mul((1 - AlphaCat) * 0.5f);
-		DoubleMatrix ErrorGradient = Diff.mul(1 - AlphaCat).mul(
-				softmaxCalc.getGradient(ClassifierTheta, WordsEmbedded));
-
+//		System.out.println ("WORDS EMBEDDED ");
+//		System.out.println (WordsEmbedded);
+		
+		
+		DoubleMatrix Predictions = softmaxCalc.getPredictions(ClassifierTheta, WordsEmbedded);		
+		
+//		DoubleMatrix Diff = Predictions.sub(Labels); //.getRows(requiredEntries);
+		DoubleMatrix Error = softmaxCalc.getLoss(Predictions, Labels); //.mul(1-AlphaCat);
+		DoubleMatrix ErrorGradient = softmaxCalc
+			.getGradient(ClassifierTheta, WordsEmbedded, Labels);
+//			.muli(1-AlphaCat); 
+//			Diff.mul(1 - AlphaCat).mul(
+//				softmaxCalc.getGradient(ClassifierTheta, WordsEmbedded));
+//				.getRows(requiredEntries));
+		
+//		DoubleMatrixFunctions.prettyPrint(Predictions);
+//		DoubleMatrixFunctions.prettyPrint(Labels);
+//		DoubleMatrixFunctions.prettyPrint(SquaredError);
+		
 		for (int i = 0; i < TreeSize; i++) {
 			Node CurrentNode = tree.T[i];
 			if (i < SentenceLength) {
-				CurrentNode.scores = SquaredError.getColumn(i).data;
+				CurrentNode.scores = Error.getColumn(i).data;
 				CurrentNode.catDelta = ErrorGradient.getColumn(i).getRows(requiredEntries);
-				tree.TotalScore += SquaredError.getColumn(i).sum();
+				tree.TotalScore += DoubleArrays.total(CurrentNode.scores);
+				
+//				DoubleMatrixFunctions.prettyPrint(CurrentNode.catDelta);
 			} else {
 				int LeftChild = TreeStructure.get(i).getFirst(), RightChild = TreeStructure
 						.get(i).getSecond();
@@ -211,17 +230,29 @@ public class RAEPropagation {
 				DoubleMatrix pNorm1 = p.div(p.norm2());
 
 				CurrentNode.UnnormalizedFeatures = p;
-				CurrentNode.Features = pNorm1;
+				CurrentNode.Features = pNorm1;		
+				
+				if (pNorm1.columns != 1)
+					System.err.println ("TOO FAT!");
+				
+//				System.out.println ("pNorm1 "+ i);
+//				System.out.println (pNorm1);
 
-				// Eq. (7) in the paper (for special case of 1d label)
-				DoubleMatrix Prediction = softmaxCalc.getPredictions(ClassifierTheta, pNorm1);
-				Diff = Prediction.sub(LabelVector);
-				CurrentNode.catDelta = (Diff.mul(Beta * (1 - AlphaCat)))
-						.mul(softmaxCalc.getGradient(ClassifierTheta, pNorm1))
-						.getRows(requiredEntries);
-				CurrentNode.scores = Prediction.data;
-				tree.TotalScore += DoubleMatrixFunctions.SquaredNorm(Diff) * 0.5 * Beta * (1 - AlphaCat);
-
+				Predictions = softmaxCalc.getPredictions(ClassifierTheta, pNorm1);
+//				DoubleMatrix Diff = Predictions.sub(Labels); //.getRows(requiredEntries);
+				CurrentNode.scores = softmaxCalc.getLoss(Predictions, LabelVector).data; //.mul((1-AlphaCat)* Beta).data;
+				CurrentNode.catDelta = softmaxCalc
+					.getGradient(ClassifierTheta, pNorm1, LabelVector)
+//					.mul((1-AlphaCat)* Beta)
+					.getRows(requiredEntries);
+//				DoubleMatrixFunctions.prettyPrint(CurrentNode.catDelta);
+//				DoubleMatrix Prediction = softmaxCalc.getPredictions(ClassifierTheta, pNorm1);
+//				Diff = Prediction.sub(LabelVector);
+//				 = (Diff.mul(Diff)).mul(0.5 * Beta * (1 - AlphaCat)).data;
+//				 = (Diff.mul(Beta * (1 - AlphaCat))
+//						.mul(softmaxCalc.getGradient(ClassifierTheta, pNorm1)));
+//				System.err.println (DoubleArrays.total(CurrentNode.scores));
+				tree.TotalScore += DoubleArrays.total(CurrentNode.scores);
 				CurrentNode.SubtreeSize = SubtreeSize[i];
 			}
 		}
@@ -288,6 +319,7 @@ public class RAEPropagation {
 					GW3_upd = ND1.mmul(A1Norm.transpose()),
 					GW4_upd = ND2.mmul(A1Norm.transpose());
 					
+				
 				accumulate(GW1_upd, GW2_upd, GW3_upd, GW4_upd, CurrentDelta, ND1, ND2);
 				
 			} else {
@@ -307,9 +339,6 @@ public class RAEPropagation {
 			System.err.println("Bad Tree for backpropagation!");
 
 		DoubleMatrix GL = DoubleMatrix.zeros(HiddenSize, SentenceLength);
-		//TODO Move this row of zeros into Wcat!
-//		DoubleMatrix TWcat = DoubleMatrix.concatVertically (
-//				theta.Wcat.dup (), DoubleMatrix.zeros(1, HiddenSize));
 		
 		// Stack of currentNode, Left(1) or Right(2), Parent Node pointer
 		Stack<Triplet<Node, Integer, Node>> ToPopulate = new Stack<Triplet<Node, Integer, Node>>();
@@ -364,11 +393,11 @@ public class RAEPropagation {
 					GWCat_upd = CurrentNode.catDelta.mmul(A1Norm.transpose());
 				
 				accumulate(GW1_upd, GW2_upd, GW3_upd, GW4_upd, CurrentDelta, ND1, ND2, 
-												GWCat_upd, CurrentNode.catDelta);				
+												GWCat_upd, CurrentNode.catDelta.rowSums());				
 				
 			} else {
-				accumulate(CurrentNode.catDelta.mmul(CurrentNode.Features.transpose()), 
-																	CurrentNode.catDelta);
+				accumulate(CurrentNode.catDelta.mmul(CurrentNode.Features.transpose()),
+						CurrentNode.catDelta);
 				
 				DoubleMatrixFunctions.IncrementColumn(GL, CurrentNode.NodeName,
 						(((NodeW.transpose()).mmul(CurrentNode.ParentDelta))
@@ -376,19 +405,8 @@ public class RAEPropagation {
 						.subi(delta));
 			}
 		}
-
+//System.out.println ("-----------");
 		incrementWordEmbedding(GL,WordsIndexed);
-	}
-	
-	private DoubleMatrix makeLabelVector (int label, int numDataItems)
-	{
-		if (label < 0 || label > CatSize)
-			System.err.println("makeLabelVector : over CatSize ->" + CatSize + "<" + label);
-		
-		DoubleMatrix LabelRepresentation = DoubleMatrix.zeros(1+CatSize,numDataItems);
-		for (int i = 0; i < numDataItems; i++)
-			LabelRepresentation.put(label, i, 1);
-		return LabelRepresentation;
 	}
 	
 	private synchronized void incrementWordEmbedding(DoubleMatrix GL, int[] WordsIndexed)
@@ -416,6 +434,8 @@ public class RAEPropagation {
 	{
 		Gbcat.addi(Gbcat_upd);
 		GWCat.addi(GWcat_upd);
+		
+//		DoubleMatrixFunctions.prettyPrint(GWcat_upd);
 	}
 	
 	private synchronized void accumulate(
@@ -428,21 +448,21 @@ public class RAEPropagation {
 	}
 
 	private void initializeGradients() {
-		GW1 = new DoubleMatrix(HiddenSize, HiddenSize);
-		GW2 = new DoubleMatrix(HiddenSize, HiddenSize);
-		GW3 = new DoubleMatrix(HiddenSize, HiddenSize);
-		GW4 = new DoubleMatrix(HiddenSize, HiddenSize);
-		GWe_total = new DoubleMatrix(HiddenSize, DictionaryLength);
+		GW1 = DoubleMatrix.zeros(HiddenSize, HiddenSize);
+		GW2 = DoubleMatrix.zeros(HiddenSize, HiddenSize);
+		GW3 = DoubleMatrix.zeros(HiddenSize, HiddenSize);
+		GW4 = DoubleMatrix.zeros(HiddenSize, HiddenSize);
+		GWe_total = DoubleMatrix.zeros(HiddenSize, DictionaryLength);
 
-		Gb1 = new DoubleMatrix(HiddenSize, 1);
-		Gb2 = new DoubleMatrix(HiddenSize, 1);
-		Gb3 = new DoubleMatrix(HiddenSize, 1);
+		Gb1 = DoubleMatrix.zeros(HiddenSize, 1);
+		Gb2 = DoubleMatrix.zeros(HiddenSize, 1);
+		Gb3 = DoubleMatrix.zeros(HiddenSize, 1);
 	}
 
 	private void initializeFineGradients() {
 		initializeGradients();
-		GWCat = new DoubleMatrix(CatSize, HiddenSize);
-		Gbcat = new DoubleMatrix(CatSize, 1);
+		GWCat = DoubleMatrix.zeros(CatSize, HiddenSize);
+		Gbcat = DoubleMatrix.zeros(CatSize, 1);
 	}
 
 	private DoubleMatrix UpdateEmbedding(DoubleMatrix CurrentEmbedding,

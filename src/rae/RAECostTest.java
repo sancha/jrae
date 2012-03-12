@@ -25,22 +25,27 @@ public class RAECostTest {
 		List<LabeledDatum<Integer,Integer>> dataset = new ArrayList<LabeledDatum<Integer,Integer>>(1);
 		dataset.add( new ReviewDatum(new String[]{"tmp1"}, 0, 0, data1));
 		dataset.add( new ReviewDatum(new String[]{"tmp2"}, 1, 1, data2));
-		double[] lambda = new double[]{1e-05, 0.0001, 1e-05, 0.01};
+//		double[] lambda = new double[]{1e-05, 0.0001, 1e-05, 0.01};
+		double[] lambda = new double[]{0, 0, 0, 0};
 		
 		RAECost cost = new RAECost(alphaCat, 2, beta, DictionarySize, hiddenSize, hiddenSize, 
 				lambda, DoubleMatrix.zeros(hiddenSize, DictionarySize), dataset, null, f);
-		
+		System.out.println (cost.dimension());
 		assertTrue( GradientChecker.check(cost) );
 		
-		DoubleMatrix xMat = DoubleMatrix.ones(cost.dimension(),1).mul(0.1);
-		
-		assertTrue( Math.abs(cost.valueAt(xMat.data)-0.5257024003476533) < 1e-10 );
+//		DoubleMatrix xMat = DoubleMatrix.ones(cost.dimension(),1).mul(0.1);
+//		assertTrue( Math.abs(cost.valueAt(xMat.data)-0.5257024003476533) < 1e-10 );
 		
 		Random rgen = new Random(0);
-		xMat = DoubleMatrix.ones(cost.dimension(),1);
-		for (int i=0; i<xMat.rows; i++)
-			xMat.put(i, 0, rgen.nextDouble());
-		DoubleArrays.prettyPrint(cost.derivativeAt(xMat.data));
+		DoubleMatrix yMat = DoubleMatrix.zeros(cost.dimension(),1);
+		for (int i=0; i<140; i++)
+			yMat.put(i, 0, rgen.nextDouble());
+		
+		for (int i=140; i<yMat.rows; i++)
+			yMat.put(i, 0, (double)(i-139)/10.0);
+		cost.valueAt (yMat.data);
+		
+//		DoubleArrays.prettyPrint(cost.derivativeAt(yMat.data));
 	}
 
 }
