@@ -25,7 +25,7 @@ import java.util.concurrent.*;
 public class Parallel {
 	private static final int NUM_CORES = Runtime.getRuntime().availableProcessors();
 	private static ExecutorService forPool;
-	private static int poolSize = 1; //NUM_CORES; 
+	private static int poolSize = NUM_CORES; 
 	
 	public static void setPoolSize(int poolSize)
 	{

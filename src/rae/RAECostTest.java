@@ -21,12 +21,13 @@ public class RAECostTest {
 		
 		int[] data1 = new int[]{1, 0, 4, 3 };
 		int[] data2 = new int[]{3, 0};
+		int[] data3 = new int[]{0, 3};
 		
 		List<LabeledDatum<Integer,Integer>> dataset = new ArrayList<LabeledDatum<Integer,Integer>>(1);
 		dataset.add( new ReviewDatum(new String[]{"tmp1"}, 0, 0, data1));
 		dataset.add( new ReviewDatum(new String[]{"tmp2"}, 1, 1, data2));
-//		double[] lambda = new double[]{1e-05, 0.0001, 1e-05, 0.01};
-		double[] lambda = new double[]{0, 0, 0, 0};
+		dataset.add( new ReviewDatum(new String[]{"tmp2"}, 1, 2, data3));
+		double[] lambda = new double[]{1e-05, 0.0001, 1e-05, 0.01};
 		
 		RAECost cost = new RAECost(alphaCat, 2, beta, DictionarySize, hiddenSize, hiddenSize, 
 				lambda, DoubleMatrix.zeros(hiddenSize, DictionarySize), dataset, null, f);

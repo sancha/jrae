@@ -79,7 +79,7 @@ public class RAECostComputer
 			}
 		});
 		CalculateFineCosts(Theta);
-		System.err.println ("FINAL COST : " + cost);
+		
 		return cost;	
 	}
 	
@@ -182,8 +182,7 @@ public class RAECostComputer
 				Propagator.GW2, Propagator.GW3, Propagator.GW4,
 				Propagator.GWCat, Propagator.GWe_total, Propagator.Gb1,
 				Propagator.Gb2, Propagator.Gb3, Propagator.Gbcat)).Theta;
-		DoubleMatrixFunctions.prettyPrint(Propagator.GWCat.transpose().mul(0.1));
-//		System.out.println (num_nodes);
+ 
 		DoubleArrays.scale(CalcGrad, (1.0f/num_nodes));
 		Gradient = DoubleArrays.add(CalcGrad, WeightedGrad);		
 	}

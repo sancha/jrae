@@ -4,8 +4,6 @@ import static org.junit.Assert.*;
 import io.*;
 
 import java.io.*;
-import java.util.Random;
-
 import math.DoubleArrays;
 import math.GradientChecker;
 
@@ -18,7 +16,7 @@ import util.ArraysHelper;
 public class SoftmaxCostTest {
 	SoftmaxCost costfn;
 	
-//	@Test
+	@Test
 	public void testDummyData() {
 		String dir = "data/parsed";
 		int numCat = 2;
@@ -49,12 +47,9 @@ public class SoftmaxCostTest {
 		}
 		costfn = new SoftmaxCost(features, l, numCat, 1e-6);
 		assertTrue(GradientChecker.check(costfn));
-		
-//		SoftmaxReconstructionCost recostfn = new SoftmaxReconstructionCost(numCat, features, l);
-//		assertTrue(GradientChecker.check(recostfn));
 	}
 	
-//	@Test
+	@Test
 	public void testRealData() throws IOException, ClassNotFoundException
 	{
 		String dir = "data/parsed";
@@ -78,13 +73,10 @@ public class SoftmaxCostTest {
 		System.out.println("Checking...");
 		
 		assertTrue(GradientChecker.check(TrainingCostFunction));
-		
-//		SoftmaxReconstructionCost recostfn = new SoftmaxReconstructionCost(CatSize, features, Labels);
-//		assertTrue(GradientChecker.check(recostfn));
 	}
 	
 
-//	@Test
+	@Test
 	public void testFournaryData ()
 	{
 		int numItems = 1;
@@ -117,9 +109,6 @@ public class SoftmaxCostTest {
 		}
 		costfn = new SoftmaxCost(features, l, numCat, 0);
 		assertTrue(GradientChecker.check(costfn));
-		
-//		SoftmaxReconstructionCost recostfn = new SoftmaxReconstructionCost(numCat, features, l);
-//		assertTrue(GradientChecker.check(recostfn));
 	}
 	
 	@Test
@@ -135,15 +124,10 @@ public class SoftmaxCostTest {
 		int[] labels = {0,0,0,0,0,0,0,1,1,1};
 		
 		costfn = new SoftmaxCost(features, labels, 3, 0);
-//		assertTrue(GradientChecker.check(costfn));		
-		System.err.println (costfn.dimension());
+		System.out.println (costfn.dimension());
 		
-//		Random rgen = new Random(0);
-//		DoubleMatrix yMat = DoubleMatrix.ones(costfn.dimension(),1);
-//		for (int i=0; i<yMat.rows; i++)
-//			yMat.put(i, 0, (double)(i+1)/10.0);
 		double[] shu = {0.1,0.3,0.5,0.7,0.9,0.2,0.4,0.6,0.8,1.0,1.1,1.2};
-		System.err.println (costfn.valueAt (shu));
+		System.out.println (costfn.valueAt (shu));
 		
 		DoubleArrays.prettyPrint(costfn.derivativeAt (shu));
 	}

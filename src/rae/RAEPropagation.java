@@ -127,9 +127,6 @@ public class RAEPropagation {
 			NewParent.scores = new double[]{ J_min };
 			tree.TotalScore += J_min;
 			
-			// System.out.println("Delta size : " + NewParent.DeltaOut1.rows +
-			// " " + NewParent.DeltaOut1.columns);
-
 			int LeftChildIndex = CollapsedSentence.get(J_minpos), 
 				RightChildIndex = CollapsedSentence.get(J_minpos + 1);
 
@@ -184,25 +181,12 @@ public class RAEPropagation {
 			SubtreeSize[i] = SubtreeSize[LeftChild] + SubtreeSize[RightChild];
 		}
 
-		// We only use Soft-max to get the prediction, the error is calculated differently!
-//		System.out.println ("WORDS EMBEDDED ");
-//		System.out.println (WordsEmbedded);
-		
-		
 		DoubleMatrix Predictions = softmaxCalc.getPredictions(ClassifierTheta, WordsEmbedded);		
 		
-//		DoubleMatrix Diff = Predictions.sub(Labels); //.getRows(requiredEntries);
-		DoubleMatrix Error = softmaxCalc.getLoss(Predictions, Labels); //.mul(1-AlphaCat);
+		DoubleMatrix Error = softmaxCalc.getLoss(Predictions, Labels).mul(1-AlphaCat);
 		DoubleMatrix ErrorGradient = softmaxCalc
-			.getGradient(ClassifierTheta, WordsEmbedded, Labels);
-//			.muli(1-AlphaCat); 
-//			Diff.mul(1 - AlphaCat).mul(
-//				softmaxCalc.getGradient(ClassifierTheta, WordsEmbedded));
-//				.getRows(requiredEntries));
-		
-//		DoubleMatrixFunctions.prettyPrint(Predictions);
-//		DoubleMatrixFunctions.prettyPrint(Labels);
-//		DoubleMatrixFunctions.prettyPrint(SquaredError);
+			.getGradient(ClassifierTheta, WordsEmbedded, Labels)
+			.muli(1-AlphaCat); 
 		
 		for (int i = 0; i < TreeSize; i++) {
 			Node CurrentNode = tree.T[i];
@@ -210,8 +194,6 @@ public class RAEPropagation {
 				CurrentNode.scores = Error.getColumn(i).data;
 				CurrentNode.catDelta = ErrorGradient.getColumn(i).getRows(requiredEntries);
 				tree.TotalScore += DoubleArrays.total(CurrentNode.scores);
-				
-//				DoubleMatrixFunctions.prettyPrint(CurrentNode.catDelta);
 			} else {
 				int LeftChild = TreeStructure.get(i).getFirst(), RightChild = TreeStructure
 						.get(i).getSecond();
@@ -232,26 +214,16 @@ public class RAEPropagation {
 				CurrentNode.UnnormalizedFeatures = p;
 				CurrentNode.Features = pNorm1;		
 				
-				if (pNorm1.columns != 1)
-					System.err.println ("TOO FAT!");
-				
-//				System.out.println ("pNorm1 "+ i);
-//				System.out.println (pNorm1);
-
 				Predictions = softmaxCalc.getPredictions(ClassifierTheta, pNorm1);
-//				DoubleMatrix Diff = Predictions.sub(Labels); //.getRows(requiredEntries);
-				CurrentNode.scores = softmaxCalc.getLoss(Predictions, LabelVector).data; //.mul((1-AlphaCat)* Beta).data;
+				CurrentNode.scores = softmaxCalc
+					.getLoss(Predictions, LabelVector)
+					.mul((1-AlphaCat)* Beta).data;
+				
 				CurrentNode.catDelta = softmaxCalc
 					.getGradient(ClassifierTheta, pNorm1, LabelVector)
-//					.mul((1-AlphaCat)* Beta)
+					.mul((1-AlphaCat)* Beta)
 					.getRows(requiredEntries);
-//				DoubleMatrixFunctions.prettyPrint(CurrentNode.catDelta);
-//				DoubleMatrix Prediction = softmaxCalc.getPredictions(ClassifierTheta, pNorm1);
-//				Diff = Prediction.sub(LabelVector);
-//				 = (Diff.mul(Diff)).mul(0.5 * Beta * (1 - AlphaCat)).data;
-//				 = (Diff.mul(Beta * (1 - AlphaCat))
-//						.mul(softmaxCalc.getGradient(ClassifierTheta, pNorm1)));
-//				System.err.println (DoubleArrays.total(CurrentNode.scores));
+			
 				tree.TotalScore += DoubleArrays.total(CurrentNode.scores);
 				CurrentNode.SubtreeSize = SubtreeSize[i];
 			}
@@ -405,7 +377,7 @@ public class RAEPropagation {
 						.subi(delta));
 			}
 		}
-//System.out.println ("-----------");
+
 		incrementWordEmbedding(GL,WordsIndexed);
 	}
 	
@@ -434,8 +406,6 @@ public class RAEPropagation {
 	{
 		Gbcat.addi(Gbcat_upd);
 		GWCat.addi(GWcat_upd);
-		
-//		DoubleMatrixFunctions.prettyPrint(GWcat_upd);
 	}
 	
 	private synchronized void accumulate(
