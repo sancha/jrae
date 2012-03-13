@@ -3,6 +3,7 @@ package util;
 import org.jblas.*;
 
 public abstract class DoubleMatrixFunctions {
+	public static final double EPSILON = 1e-10;
 	
 	public static DoubleMatrix ColumnWiseNormalize(DoubleMatrix P)
 	{
@@ -23,6 +24,11 @@ public abstract class DoubleMatrixFunctions {
 		DoubleMatrix IncColumn = inp.getColumn(ColumnIndex);
 		inp.putColumn(ColumnIndex, IncColumn.addi(ColumnVector));
 		return inp;
+	}
+	
+	public static DoubleMatrix addDeltaToZeros (DoubleMatrix inp)
+	{
+		return inp.maxi(EPSILON);
 	}
 	
 	public static double SquaredNorm(DoubleMatrix inp)

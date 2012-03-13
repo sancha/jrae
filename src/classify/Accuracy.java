@@ -2,6 +2,8 @@ package classify;
 
 import org.jblas.DoubleMatrix;
 
+import util.DoubleMatrixFunctions;
+
 public class Accuracy
 {
 	double Precision, Recall, Accuracy, F1;
@@ -18,8 +20,10 @@ public class Accuracy
 		System.out.println(ConfusionMatrix);
 		
 		DoubleMatrix Diag = ConfusionMatrix.diag();
-		Precision = ((Diag.div( ConfusionMatrix.columnSums() )).sum()) / (CatSize);
-		Recall = ((Diag.div( ConfusionMatrix.rowSums() )).sum()) / (CatSize);
+		DoubleMatrix colSums = DoubleMatrixFunctions.addDeltaToZeros(ConfusionMatrix.columnSums());
+		DoubleMatrix rowSums = DoubleMatrixFunctions.addDeltaToZeros(ConfusionMatrix.rowSums());
+		Precision = (Diag.div(colSums)).sum() / CatSize;
+		Recall = (Diag.div(rowSums)).sum() / CatSize;
 		Accuracy = Diag.sum() / ConfusionMatrix.sum();
 		F1 = ( 2 * Precision * Recall ) / (Precision + Recall);
 	}
