@@ -51,33 +51,37 @@ public class RAECostComputer
 		cost = 0;
 		num_nodes = 0;
 		Propagator = new RAEPropagation(Theta,AlphaCat,Beta,HiddenSize,DictionaryLength,f);
-
-		Parallel.For(DataCell, new Parallel.Operation<LabeledDatum<Integer,Integer>>() {
-			public void perform(int index, LabeledDatum<Integer,Integer> Data)
-			{
-				int[] WordIndices = ArraysHelper.getIntArray( Data.getFeatures() );
-				DoubleMatrix WordsEmbedded = Theta.We.getColumns(WordIndices);
-				//FloatMatrix Freq = FreqOrig.getColumns(Data);
+		
+		Propagator = ThreadPool.mapReduce (DataCell, Propagator, 
+				new ThreadPool.Operation<RAEPropagation, LabeledDatum<Integer,Integer>>() {
+					public void perform(RAEPropagation locPropagator, int index, 
+							LabeledDatum<Integer,Integer> Data)
+					{
+						int[] WordIndices = ArraysHelper.getIntArray( Data.getFeatures() );
+						DoubleMatrix WordsEmbedded = Theta.We.getColumns(WordIndices);
+						//FloatMatrix Freq = FreqOrig.getColumns(Data);
 				
-				int CurrentLabel = Data.getLabel();
-				int SentenceLength = WordsEmbedded.columns;
+						int CurrentLabel = Data.getLabel();
+						int SentenceLength = WordsEmbedded.columns;
 				
-				if(SentenceLength == 1)
-					return;
+						if(SentenceLength == 1)
+							return;
 				
-				LabeledRAETree tree = Propagator.ForwardPropagate(Theta, WordsEmbedded, FreqOrig, 
-										CurrentLabel, SentenceLength, AllTrees[index]);
+						LabeledRAETree tree = locPropagator.ForwardPropagate
+									(Theta, WordsEmbedded, FreqOrig, CurrentLabel, 
+									SentenceLength, AllTrees[index]);
 				
-				Propagator.BackPropagate(tree, Theta, WordIndices);
+						locPropagator.BackPropagate(tree, Theta, WordIndices);
 				
-				lock.lock();
-				{
-					cost += tree.TotalScore; 
-					num_nodes += tree.TreeSize;
-				}
-				lock.unlock();
-			}
-		});
+						lock.lock();
+						{
+							cost += tree.TotalScore; 
+							num_nodes += tree.TreeSize;
+						}
+						lock.unlock();
+					}
+			});
+		
 		CalculateFineCosts(Theta);
 		
 		return cost;	
@@ -95,31 +99,34 @@ public class RAECostComputer
 		num_nodes = 0;
 		Propagator = new RAEPropagation(Theta,AlphaCat,Beta,HiddenSize,DictionaryLength,f);
 		
-		Parallel.For(DataCell, new Parallel.Operation<LabeledDatum<Integer,Integer>>() {
-			public void perform(int index, LabeledDatum<Integer,Integer> Data)
-			{
-				int[] WordIndices = ArraysHelper.getIntArray( Data.getFeatures() );
-				DoubleMatrix L = Theta.We.getColumns(WordIndices);
-				DoubleMatrix WordsEmbedded = (WeOrig.getColumns(WordIndices)).addi(L);
-				
-				int CurrentLabel = Data.getLabel();
-				int SentenceLength = WordsEmbedded.columns;
-				
-				if(SentenceLength == 1) 
-					return;
-				
-				LabeledRAETree tree = Propagator.ForwardPropagate(Theta, WordsEmbedded, FreqOrig, CurrentLabel, SentenceLength);
-				Propagator.BackPropagate(tree, Theta, WordIndices);
-				
-				lock.lock();
-				{
-					AllTrees[ index ] = tree;
-					cost += tree.TotalScore; 
-			        num_nodes += SentenceLength;
-		        }
-				lock.unlock();
-			}
-		});
+		Propagator = ThreadPool.mapReduce (DataCell, Propagator, 
+				new ThreadPool.Operation<RAEPropagation, LabeledDatum<Integer,Integer>>() {
+					public void perform(RAEPropagation locPropagator, int index, 
+							LabeledDatum<Integer,Integer> Data)
+					{
+						int[] WordIndices = ArraysHelper.getIntArray( Data.getFeatures() );
+						DoubleMatrix L = Theta.We.getColumns(WordIndices);
+						DoubleMatrix WordsEmbedded = (WeOrig.getColumns(WordIndices)).addi(L);
+						
+						int CurrentLabel = Data.getLabel();
+						int SentenceLength = WordsEmbedded.columns;
+						
+						if(SentenceLength == 1) 
+							return;
+						
+						LabeledRAETree tree = locPropagator.ForwardPropagate
+									(Theta, WordsEmbedded, FreqOrig, CurrentLabel, SentenceLength);
+						locPropagator.BackPropagate(tree, Theta, WordIndices);
+						
+						lock.lock();
+						{
+							AllTrees[ index ] = tree;
+							cost += tree.TotalScore; 
+					        num_nodes += SentenceLength;
+				        }
+						lock.unlock();
+					}
+			});
 		
 		num_nodes -= NumExamples;
 		CalculateCosts(Theta);
