@@ -7,11 +7,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-
 import org.junit.Test;
-
-import rae.RAEPropagation;
-import classify.LabeledDatum;
 
 import util.Reducible;
 

@@ -14,7 +14,7 @@ public class Norm1Tanh extends DifferentiableMatrixFunction {
 	 * diag(1-x.^2)./nrm - y*x'./nrm^3
 	 */	
 	@Override
-	public synchronized DoubleMatrix derivativeAt(DoubleMatrix M)
+	public DoubleMatrix derivativeAt(DoubleMatrix M)
 	{
 		double norm = M.norm2();
 		DoubleMatrix Squared = M.mul(M);
@@ -31,7 +31,7 @@ public class Norm1Tanh extends DifferentiableMatrixFunction {
 	 * as in the original matlab file.
 	 */
 	@Override
-	public synchronized DoubleMatrix valueAt(DoubleMatrix M)
+	public DoubleMatrix valueAt(DoubleMatrix M)
 	{
 		return MatrixFunctions.tanh(M);
 	}

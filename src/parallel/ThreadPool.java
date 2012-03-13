@@ -16,10 +16,9 @@ public class ThreadPool {
 	{
 		ThreadPool.poolSize = poolSize;
 	}
-	
-//	@SuppressWarnings("unchecked")
-	public static <T,E extends Reducible<E>,F> E mapReduce
-		(final Collection<T> pElements, final E Operator, final Operation<E,T> pOperation) {
+
+	public static <T,E extends Reducible<E>,F> Collection<E> map
+	(final Collection<T> pElements, final E Operator, final Operation<E,T> pOperation) {
 		
 	    final LinkedList<E> queue = new LinkedList<E>();
 	    for (int i=0; i<ThreadPool.poolSize; i++)
@@ -79,6 +78,12 @@ public class ThreadPool {
 			System.err.println ("Some data processing was lost! " + "Only " + 
 					queue.size() + " processors of " + poolSize + " exists now");
 		
+		return queue;	
+	}
+
+	public static <T,E extends Reducible<E>,F> E mapReduce
+		(final Collection<T> pElements, final E Operator, final Operation<E,T> pOperation) {
+		Collection<E> queue = map(pElements, Operator, pOperation);
 		Reducer<E> accumulator = new Reducer<E>();
 		return accumulator.reduce(queue);
 	}
