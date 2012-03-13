@@ -10,7 +10,8 @@ import util.*;
 
 import java.util.*;
 
-public class RAEPropagation {
+public class RAEPropagation 
+	implements Reducible<RAEPropagation>{
 	DifferentiableMatrixFunction f;
 	DoubleMatrix GW1, GW2, GW3, GW4, GWCat, GWe_total;
 	DoubleMatrix Gb1, Gb2, Gb3, Gbcat;
@@ -24,6 +25,7 @@ public class RAEPropagation {
 		this.HiddenSize = HiddenSize;
 		this.DictionaryLength = DictionaryLength;
 		this.f = f;
+		CatSize = -1;
 		initializeGradients();
 	}
 
@@ -36,6 +38,19 @@ public class RAEPropagation {
 		this.f = f;
 		this.CatSize = CatSize;
 		initializeFineGradients();
+	}
+	
+	/*
+	 * (non-Javadoc) RAEPropagation's clone does not copy all the 
+	 * intermediate gradient information. It copies only the paramters
+	 * and then re-initializes them.
+	 * @see java.lang.Object#clone()
+	 */
+	public Object copy()
+	{
+		return (CatSize != -1) ?
+			new RAEPropagation(AlphaCat, Beta, HiddenSize, CatSize, DictionaryLength, f) :
+			new RAEPropagation(AlphaCat, Beta, HiddenSize, DictionaryLength, f);
 	}
 
 	public RAEPropagation(Theta theta, double AlphaCat, double Beta,
@@ -453,5 +468,14 @@ public class RAEPropagation {
 			return DoubleMatrix.concatHorizontally(CurrentEmbedding.getColumns(leftColumns), 
 							DoubleMatrix.concatHorizontally(
 									ColumnVector, CurrentEmbedding.getColumns(rightColumns)));
+	}
+
+	
+	@Override
+	public synchronized void reduce(RAEPropagation t) {
+		accumulate(t.GW1, t.GW2, t.GW3, t.GW4, t.Gb1, t.Gb2, t.Gb3);
+		if(t.GWCat != null)
+			accumulate(t.GWCat, t.Gbcat);
+		GWe_total.addi(t.GWe_total);
 	}
 }
