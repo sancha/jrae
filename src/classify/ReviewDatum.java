@@ -75,10 +75,17 @@ public class ReviewDatum implements LabeledDatum<Integer,Integer> {
 	@Override
 	public String toString()
 	{
-		String retString = Index + " // ";
+		String retString = ""; //Index + " // ";
 		for (int i=0; i<ReviewTokens.length; i++)
 			retString += ReviewTokens[i] + " ";
 		return retString;
+	}
+	
+	public String getToken (int pos)
+	{
+		if (pos > ReviewTokens.length)
+			System.err.println ("Invalid query for item #" + Index);
+		return ReviewTokens[pos];
 	}
 	
 	public int[] getIndices()

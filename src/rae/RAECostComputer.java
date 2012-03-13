@@ -22,7 +22,7 @@ public class RAECostComputer
 	double[] Gradient;
 	double cost;
 	Lock lock;
-	Structure[] AllKids;
+	LabeledRAETree[] AllTrees;
 	
 	public RAECostComputer(int CatSize, double AlphaCat, double Beta, int DictionaryLength, int HiddenSize
 				, List<LabeledDatum<Integer,Integer>> DataCell, FloatMatrix FreqOrig, DifferentiableMatrixFunction f){
@@ -36,7 +36,7 @@ public class RAECostComputer
 		this.FreqOrig = FreqOrig;
 		this.f = f;
 		num_nodes = 0;
-		AllKids = new Structure[NumExamples];
+		AllTrees = new LabeledRAETree[NumExamples];
 		lock = new ReentrantLock();
 	}
 	
@@ -66,7 +66,7 @@ public class RAECostComputer
 					return;
 				
 				LabeledRAETree tree = Propagator.ForwardPropagate(Theta, WordsEmbedded, FreqOrig, 
-										CurrentLabel, SentenceLength, AllKids[index]);
+										CurrentLabel, SentenceLength, AllTrees[index]);
 				
 				Propagator.BackPropagate(tree, Theta, WordIndices);
 				
@@ -109,12 +109,11 @@ public class RAECostComputer
 					return;
 				
 				LabeledRAETree tree = Propagator.ForwardPropagate(Theta, WordsEmbedded, FreqOrig, CurrentLabel, SentenceLength);
-				AllKids[ index ] = tree.structure;
-				
 				Propagator.BackPropagate(tree, Theta, WordIndices);
 				
 				lock.lock();
-				{	
+				{
+					AllTrees[ index ] = tree;
 					cost += tree.TotalScore; 
 			        num_nodes += SentenceLength;
 		        }
@@ -137,9 +136,9 @@ public class RAECostComputer
 		return cost;
 	}
 	
-	public Structure[] getKids()
+	public LabeledRAETree[] getKids()
 	{ 
-		return AllKids;
+		return AllTrees;
 	} 
 	
 	private void CalculateCosts(Theta Theta)
@@ -177,7 +176,6 @@ public class RAECostComputer
 		double[] WeightedGrad = (new FineTunableTheta(Theta.W1.mul(LambdaW),Theta.W2.mul(LambdaW),Theta.W3.mul(LambdaW),
 		Theta.W4.mul(LambdaW),Theta.Wcat.mul(LambdaCat),Theta.We.mul(LambdaL),b0,b0,b0,bcat0)).Theta; 
 		
-
 		double[] CalcGrad = (new FineTunableTheta(Propagator.GW1,
 				Propagator.GW2, Propagator.GW3, Propagator.GW4,
 				Propagator.GWCat, Propagator.GWe_total, Propagator.Gb1,

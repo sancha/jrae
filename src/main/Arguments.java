@@ -120,6 +120,21 @@ public class Arguments {
 		if (argMap.containsKey("-FeaturesOutputFile"))
 			featuresOutputFile = argMap.get("-FeaturesOutputFile");
 		
+		if (argMap.containsKey("-TreeDumpDir"))
+		{
+			TreeDumpDir = argMap.get("-TreeDumpDir");
+
+			File treeDumpFile = new File (TreeDumpDir);
+			if (!treeDumpFile.exists())
+				treeDumpFile.mkdir();
+			else if (!treeDumpFile.isDirectory())
+			{
+				System.err.println ("TreeDumpDir file exists but it is not a directory.");
+				exitOnReturn = true;
+				printUsage();
+			}
+		}
+		
 		if (argMap.containsKey("-ProbabilitiesOutputFile"))
 			ProbabilitiesOutputFile = argMap.get("-ProbabilitiesOutputFile");
 		

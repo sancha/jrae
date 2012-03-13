@@ -101,6 +101,12 @@ public class RAEFeatureExtractor {
 		DoubleMatrix WordsEmbedded = Theta.We.getColumns(wordIndices);
 		int CurrentLabel = data.getLabel();
 		
-		return Propagator.ForwardPropagate(Theta, WordsEmbedded, null, CurrentLabel, SentenceLength);
+		LabeledRAETree tree = Propagator
+			.ForwardPropagate(Theta, WordsEmbedded, null, CurrentLabel, SentenceLength);
+		
+		tree = Propagator
+			.ForwardPropagate(Theta, WordsEmbedded, null, CurrentLabel, SentenceLength, tree);
+		
+		return tree;
 	}	
 }

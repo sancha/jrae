@@ -1,5 +1,7 @@
 package util;
 
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.*;
 
 public abstract class ArraysHelper{
@@ -67,6 +69,15 @@ public abstract class ArraysHelper{
 		String str = "";
 		for (int i=0; i<inp.length; i++)
 			str += inp[i] + " ";
+		return str;
+	}
+	
+	public static String makeStringFromDoubleArray (double[] inp)
+	{
+		NumberFormat formatter = new DecimalFormat("#0.0000");
+		String str = "";
+		for (int i=0; i<inp.length; i++)
+			str += " " + formatter.format(inp[i]);
 		return str;
 	}
 }

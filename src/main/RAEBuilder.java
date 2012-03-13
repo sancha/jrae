@@ -1,5 +1,8 @@
 package main;
 
+import io.LabeledDataSet;
+
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -19,12 +22,15 @@ import math.QNMinimizer;
 import classify.Accuracy;
 import classify.ClassifierTheta;
 import classify.LabeledDatum;
+import classify.ReviewDatum;
 import classify.SoftmaxClassifier;
 
 import rae.FineTunableTheta;
 import rae.RAECost;
 import rae.RAEFeatureExtractor;
 import rae.LabeledRAETree;
+import rae.RAENode;
+import util.ArraysHelper;
 
 public class RAEBuilder {
 	FineTunableTheta InitialTheta;
@@ -78,18 +84,17 @@ public class RAEBuilder {
 				rae.DumpFeatures(params.featuresOutputFile,
 						classifierTrainingData);
 
-			if (params.featuresOutputFile != null)
+			if (params.ProbabilitiesOutputFile != null)
 				rae.DumpProbabilities(params.ProbabilitiesOutputFile,
 						classifier.getTrainScores());
 
-			if (params.featuresOutputFile != null)
-				rae.DumpTrees(params.TreeDumpDir, Trees);
+			if (params.TreeDumpDir != null)
+				rae.DumpTrees(Trees, params.TreeDumpDir, params.Dataset, params.Dataset.Data);
 
 		} else {
-			System.out
-					.println("Using the trained RAE. Model file retrieved from "
-							+ params.ModelFile
-							+ "\nNote that this overrides all RAE specific arguments you passed.");
+			System.out.println
+					("Using the trained RAE. Model file retrieved from " + params.ModelFile
+					+ "\nNote that this overrides all RAE specific arguments you passed.");
 
 			FineTunableTheta tunedTheta = rae.loadRAE(params);
 			assert tunedTheta.getNumCategories() == params.Dataset.getCatSize();
@@ -103,8 +108,7 @@ public class RAEBuilder {
 			
 			if (params.Dataset.Data.size() > 0) {
 				System.err.println("There is training data in the directory.");
-				System.err
-						.println("It will be ignored when you are not in the training mode.");
+				System.err.println("It will be ignored when you are not in the training mode.");
 			}
 
 			List<LabeledRAETree> testTrees = fe.getRAETrees (params.Dataset.TestData);
@@ -119,9 +123,59 @@ public class RAEBuilder {
 				rae.DumpFeatures(params.featuresOutputFile,
 						classifierTestingData);
 
-			if (params.featuresOutputFile != null)
+			if (params.ProbabilitiesOutputFile != null)
 				rae.DumpProbabilities(params.ProbabilitiesOutputFile,
 						classifier.getTestScores());
+			
+			if (params.TreeDumpDir != null)
+				rae.DumpTrees(testTrees, params.TreeDumpDir, params.Dataset, params.Dataset.TestData);			
+		}
+	}
+
+	private void DumpTrees( List<LabeledRAETree> trees, String treeDumpDir,
+			LabeledDataSet<LabeledDatum<Integer, Integer>, Integer, Integer> dataset,
+			List<LabeledDatum<Integer, Integer>> data) throws Exception {
+		
+		if (trees.size () != data.size())
+			throw new Exception ("Inconsistent data!");
+			
+		File treeStructuresFile = new File (treeDumpDir, "treeStructures.txt");
+		PrintStream treeStructuresStream = new PrintStream(treeStructuresFile);
+		
+		for (int i=0; i<trees.size(); i++)
+		{
+			LabeledRAETree tree = trees.get(i);
+			ReviewDatum datum = (ReviewDatum) data.get(i);
+			int[] parentStructure = tree.getStructureString();
+			
+			treeStructuresStream.println(ArraysHelper.makeStringFromIntArray(parentStructure));
+			File vectorsFile = new File (treeDumpDir, "sent"+(i+1)+"_nodeVecs.txt");
+			PrintStream vectorsStream = new PrintStream(vectorsFile);
+			
+			File substringsFile = new File (treeDumpDir, "sent"+(i+1)+"_strings.txt");
+			PrintStream substringsStream = new PrintStream(substringsFile);
+			
+			File classifierOutputFile = new File (treeDumpDir, "sent"+(i+1)+"_classifierOutput.txt");
+			PrintStream classifierOutputStream = new PrintStream(classifierOutputFile);
+			
+			for (RAENode node : tree.getNodes())
+			{
+				double[] features = node.getFeatures();
+				double[] scores = node.getScores();
+				List<Integer> subTreeWords = node.getSubtreeWordIndices();
+				
+				String subTreeString = subTreeWords.size() + " ";
+				for (int pos : subTreeWords)
+					subTreeString += datum.getToken(pos) + " ";
+				
+				vectorsStream.println(ArraysHelper.makeStringFromDoubleArray(features));
+				classifierOutputStream.println(ArraysHelper.makeStringFromDoubleArray(scores));
+				substringsStream.println(subTreeString);
+			}
+			
+			vectorsStream.close();
+			classifierOutputStream.close();
+			substringsStream.close();
 		}
 	}
 
@@ -152,12 +206,7 @@ public class RAEBuilder {
 		}
 		out.close();
 	}
-
-	public void DumpTrees(String TreesDumpDirectory, List<LabeledRAETree> trees)
-			throws Exception {
-		throw new Exception("Dumping trees not implemented yet!");
-	}
-
+	
 	private FineTunableTheta train(Arguments params) throws IOException,
 			ClassNotFoundException {
 

@@ -55,6 +55,32 @@ Refer run.sh for sample usage.
 	NOTE :: FILE should either not be a txt file or it should not point to the
 	same directory as the -DataDir option. The next time jrae processes the 
 	directory, it will read in the probabilities as training data.
+
+-TreeDumpDir DIR
+	Set DIR to point to point to a directory where you want to dump out all
+	the trees. You can use this parameter both during training and testing.
+	For each data item, it writes out three files as follows with each line
+	containing information about a subtree of the RAE model. 
+	(# stands for data item number, with index starting at 1):
+		* sent#_strings.txt
+			Each line is of the form <n word1 word2 ... wordn>
+			n indicates how long the subtree is.
+	
+		* sent#_classifierOutput.txt
+			The probability emitted by the classifier indicating which 
+			class it belongs to. It is increasing order of label. 
+			NOTE: The ordering of the labels is listed in "labels.map". 
+		
+		* sent#_nodeVecs.txt
+			Each line contains the features calculated by the RAE model at 
+			each node. This is the feature of the entire subtree underneath 
+			this node.  
+		
+	There is also a treeStructures.txt file which lists the tree structure 
+	built by the RAE, one data item per line. The first "n" values indicate
+	the index of the parent of the individual tokens in the data item. The 
+	next "n-1" entries each correspond to the internal nodes built by the 
+	RAE model.  
 		
 -NumCores NUMCORES
 	Indicates how many parallel threads to use for feature processing. 
@@ -99,14 +125,14 @@ Refer run.sh for sample usage.
 	on the embedding We (Refer the paper for more details)
 			
 -lambdaCat
-	All lambda are weights on the regularization terms. LAMBDACAT is the weight
-	on the classifier weights.
+	All lambda are weights on the regularization terms. LAMBDACAT is the 
+	weight on the classifier weights.
 
 -lambdaRAE
-	All lambda are weights on the regularization terms. LAMBDARAE is the weight
-	on the classifier weights. This differs from LAMBDACAT in that this is applied
-	in the second phase where the RAE is being fine-tuned (Refer the paper for more
-	details)
+	All lambda are weights on the regularization terms. LAMBDARAE is the 
+	weight on the classifier weights. This differs from LAMBDACAT in that 
+	this is applied in the second phase where the RAE is being fine-tuned 
+	(Refer the paper for more details)
 
 --help
 	Print this message and quit.

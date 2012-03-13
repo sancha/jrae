@@ -115,7 +115,7 @@ public class RAEPropagation {
 
 			// System.out.println(J_min + " " + J_minpos);
 
-			Node NewParent = tree.T[SentenceLength + j];
+			RAENode NewParent = tree.T[SentenceLength + j];
 			NewParent.Y1C1 = Y1C1.getColumn(J_minpos);
 			NewParent.Y2C2 = Y2C2.getColumn(J_minpos);
 			NewParent.DeltaOut1 = f.derivativeAt(Y1.getColumn(J_minpos))
@@ -130,7 +130,7 @@ public class RAEPropagation {
 			int LeftChildIndex = CollapsedSentence.get(J_minpos), 
 				RightChildIndex = CollapsedSentence.get(J_minpos + 1);
 
-			Node LeftChild = tree.T[LeftChildIndex], RightChild = tree.T[RightChildIndex];
+			RAENode LeftChild = tree.T[LeftChildIndex], RightChild = tree.T[RightChildIndex];
 
 			NewParent.LeftChild = LeftChild;
 			NewParent.RightChild = RightChild;
@@ -160,10 +160,10 @@ public class RAEPropagation {
 	 */
 	public LabeledRAETree ForwardPropagate(FineTunableTheta theta,
 			DoubleMatrix WordsEmbedded, FloatMatrix Freq, int CurrentLabel,
-			int SentenceLength, Structure TreeStructure) {
+			int SentenceLength, LabeledRAETree tree) {
 		CatSize = theta.Wcat.rows;
 		int TreeSize = 2 * SentenceLength - 1;
-		LabeledRAETree tree = new LabeledRAETree(SentenceLength, CurrentLabel, HiddenSize, CatSize, WordsEmbedded);
+//		LabeledRAETree tree = new LabeledRAETree(SentenceLength, CurrentLabel, HiddenSize, CatSize, WordsEmbedded);
 		int[] SubtreeSize = new int[TreeSize];
 		int[] requiredEntries = ArraysHelper.makeArray(0, CatSize-1);
 		
@@ -175,8 +175,8 @@ public class RAEPropagation {
 		DoubleMatrix LabelVector = Labels.getColumn(0); 
 		
 		for (int i = SentenceLength; i < TreeSize; i++) {
-			int LeftChild = TreeStructure.get(i).getFirst(), 
-				RightChild = TreeStructure.get(i).getSecond();
+			int LeftChild = tree.structure.get(i).getFirst(), 
+				RightChild = tree.structure.get(i).getSecond();
 
 			SubtreeSize[i] = SubtreeSize[LeftChild] + SubtreeSize[RightChild];
 		}
@@ -189,14 +189,15 @@ public class RAEPropagation {
 			.muli(1-AlphaCat); 
 		
 		for (int i = 0; i < TreeSize; i++) {
-			Node CurrentNode = tree.T[i];
+			RAENode CurrentNode = tree.T[i];
 			if (i < SentenceLength) {
-				CurrentNode.scores = Error.getColumn(i).data;
+				CurrentNode.scores = Predictions.getColumn(i).data;
 				CurrentNode.catDelta = ErrorGradient.getColumn(i).getRows(requiredEntries);
-				tree.TotalScore += DoubleArrays.total(CurrentNode.scores);
+				tree.TotalScore += Error.getColumn(i).sum ();
 			} else {
-				int LeftChild = TreeStructure.get(i).getFirst(), RightChild = TreeStructure
-						.get(i).getSecond();
+				int LeftChild = tree.structure.get(i).getFirst(), 
+					RightChild = tree.structure.get(i).getSecond();
+				
 				DoubleMatrix C1 = tree.T[LeftChild].Features, C2 = tree.T[RightChild].Features;
 
 				CurrentNode.LeftChild = tree.T[LeftChild];
@@ -215,20 +216,20 @@ public class RAEPropagation {
 				CurrentNode.Features = pNorm1;		
 				
 				Predictions = softmaxCalc.getPredictions(ClassifierTheta, pNorm1);
-				CurrentNode.scores = softmaxCalc
-					.getLoss(Predictions, LabelVector)
-					.mul((1-AlphaCat)* Beta).data;
+				
+				CurrentNode.scores = Predictions.data;
 				
 				CurrentNode.catDelta = softmaxCalc
 					.getGradient(ClassifierTheta, pNorm1, LabelVector)
 					.mul((1-AlphaCat)* Beta)
 					.getRows(requiredEntries);
 			
-				tree.TotalScore += DoubleArrays.total(CurrentNode.scores);
+				tree.TotalScore += ((1-AlphaCat)* Beta) *
+					softmaxCalc.getLoss(Predictions, LabelVector).sum();
+				
 				CurrentNode.SubtreeSize = SubtreeSize[i];
 			}
 		}
-		tree.structure = TreeStructure;
 		return tree;
 	}
 
@@ -240,11 +241,11 @@ public class RAEPropagation {
 		DoubleMatrix GL = DoubleMatrix.zeros(HiddenSize, SentenceLength);
 
 		// Stack of currentNode, Left(1) or Right(2), Parent Node pointer
-		Stack<Triplet<Node, Integer, Node>> ToPopulate = new Stack<Triplet<Node, Integer, Node>>();
+		Stack<Triplet<RAENode, Integer, RAENode>> ToPopulate = new Stack<Triplet<RAENode, Integer, RAENode>>();
 
-		Node Root = tree.T[tree.T.length - 1];
+		RAENode Root = tree.T[tree.T.length - 1];
 		Root.ParentDelta = DoubleMatrix.zeros(HiddenSize, 1);
-		ToPopulate.push(new Triplet<Node, Integer, Node>(Root, 0, null));
+		ToPopulate.push(new Triplet<RAENode, Integer, RAENode>(Root, 0, null));
 
 		DoubleMatrix[] W = new DoubleMatrix[3];
 		W[0] = DoubleMatrix.zeros(HiddenSize, HiddenSize);
@@ -253,9 +254,9 @@ public class RAEPropagation {
 		DoubleMatrix Y0C0 = DoubleMatrix.zeros(HiddenSize, 1);
 
 		while (!ToPopulate.empty()) {
-			Triplet<Node, Integer, Node> top = ToPopulate.pop();
+			Triplet<RAENode, Integer, RAENode> top = ToPopulate.pop();
 			int LeftOrRight = top.getSecond();
-			Node CurrentNode = top.getFirst(), ParentNode = top.getThird();
+			RAENode CurrentNode = top.getFirst(), ParentNode = top.getThird();
 			DoubleMatrix[] YCSelector = null;
 			if (ParentNode == null)
 				YCSelector = new DoubleMatrix[] { Y0C0, null, null };
@@ -267,9 +268,9 @@ public class RAEPropagation {
 			DoubleMatrix delta = YCSelector[LeftOrRight];
 
 			if (!CurrentNode.isLeaf()) {
-				ToPopulate.push(new Triplet<Node, Integer, Node>(
+				ToPopulate.push(new Triplet<RAENode, Integer, RAENode>(
 						CurrentNode.LeftChild, 1, CurrentNode));
-				ToPopulate.push(new Triplet<Node, Integer, Node>(
+				ToPopulate.push(new Triplet<RAENode, Integer, RAENode>(
 						CurrentNode.RightChild, 2, CurrentNode));
 
 				DoubleMatrix A1 = CurrentNode.UnnormalizedFeatures, A1Norm = CurrentNode.Features;
@@ -313,11 +314,11 @@ public class RAEPropagation {
 		DoubleMatrix GL = DoubleMatrix.zeros(HiddenSize, SentenceLength);
 		
 		// Stack of currentNode, Left(1) or Right(2), Parent Node pointer
-		Stack<Triplet<Node, Integer, Node>> ToPopulate = new Stack<Triplet<Node, Integer, Node>>();
+		Stack<Triplet<RAENode, Integer, RAENode>> ToPopulate = new Stack<Triplet<RAENode, Integer, RAENode>>();
 
-		Node Root = tree.T[tree.T.length - 1];
+		RAENode Root = tree.T[tree.T.length - 1];
 		Root.ParentDelta = DoubleMatrix.zeros(HiddenSize, 1);
-		ToPopulate.push(new Triplet<Node, Integer, Node>(Root, 0, null));
+		ToPopulate.push(new Triplet<RAENode, Integer, RAENode>(Root, 0, null));
 
 		DoubleMatrix[] W = new DoubleMatrix[3];
 		W[0] = DoubleMatrix.zeros(HiddenSize, HiddenSize);
@@ -326,9 +327,9 @@ public class RAEPropagation {
 		DoubleMatrix Y0C0 = DoubleMatrix.zeros(HiddenSize, 1);
 
 		while (!ToPopulate.empty()) {
-			Triplet<Node, Integer, Node> top = ToPopulate.pop();
+			Triplet<RAENode, Integer, RAENode> top = ToPopulate.pop();
 			int LeftOrRight = top.getSecond();
-			Node CurrentNode = top.getFirst(), ParentNode = top.getThird();
+			RAENode CurrentNode = top.getFirst(), ParentNode = top.getThird();
 			DoubleMatrix[] YCSelector = null;
 			if (ParentNode == null)
 				YCSelector = new DoubleMatrix[] { Y0C0, null, null };
@@ -340,8 +341,8 @@ public class RAEPropagation {
 
 			if (!CurrentNode.isLeaf()) 
 			{
-				ToPopulate.push(new Triplet<Node, Integer, Node>(CurrentNode.LeftChild, 1, CurrentNode));
-				ToPopulate.push(new Triplet<Node, Integer, Node>(CurrentNode.RightChild, 2, CurrentNode));
+				ToPopulate.push(new Triplet<RAENode, Integer, RAENode>(CurrentNode.LeftChild, 1, CurrentNode));
+				ToPopulate.push(new Triplet<RAENode, Integer, RAENode>(CurrentNode.RightChild, 2, CurrentNode));
 
 				DoubleMatrix A1 = CurrentNode.UnnormalizedFeatures, A1Norm = CurrentNode.Features;
 				DoubleMatrix ND1 = CurrentNode.DeltaOut1, ND2 = CurrentNode.DeltaOut2;
