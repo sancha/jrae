@@ -4,13 +4,15 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import util.Reducible;
 import util.Reducer;
 import util.Pair;
 
 public class ThreadPool {
-	private static final int NUM_CORES = Runtime.getRuntime().availableProcessors();
-	private static int poolSize = NUM_CORES; 
+	private static int poolSize = Runtime.getRuntime().availableProcessors(); 
 	
 	public static void setPoolSize(int poolSize)
 	{
@@ -20,12 +22,14 @@ public class ThreadPool {
 	public static <T,E extends Reducible<E>,F> Collection<E> map
 	(final Collection<T> pElements, final E Operator, final Operation<E,T> pOperation) {
 		
-	    final LinkedList<E> queue = new LinkedList<E>();
+		ExecutorService execSvc = Executors.newFixedThreadPool( ThreadPool.poolSize );
+		final LinkedList<E> queue = new LinkedList<E>();
 	    for (int i=0; i<ThreadPool.poolSize; i++)
 		{
 			queue.add( (E)Operator.copy() );
 		}
 	    
+	    System.err.printf("Performing map-reduce on %d cores\n", queue.size());
 		List<Pair<Integer,T>> indexedElements = new ArrayList<Pair<Integer,T>>(pElements.size());
 		
 		int index = 0;
@@ -44,8 +48,8 @@ public class ThreadPool {
                     try{
                         queue.wait();						
                         numStarted++;
-						if (numStarted % 5000 == 0)
-							System.out.printf (".");
+						if (numStarted % 500 == 0)
+							System.out.printf (".",queue.size());
                     }
                     catch (InterruptedException e){
                     	System.err.println (e.getMessage());
@@ -55,17 +59,18 @@ public class ThreadPool {
             }
             
             try{
-				new Runnable() {
-					@Override
-					public void run() {
-						pOperation.perform(executors.get(element.getFirst()), 
-								element.getFirst(), element.getSecond());	
-						synchronized(queue) {
-							queue.add(executors.get(element.getFirst()));
-							queue.notify();
+            	execSvc.execute( 
+					new Runnable() {
+						@Override
+						public void run() {
+							pOperation.perform(executors.get(element.getFirst()), 
+									element.getFirst(), element.getSecond());	
+							synchronized(queue) {
+								queue.add(executors.get(element.getFirst()));
+								queue.notify();
+							}
 						}
-					}
-				}.run();
+				});
 			}
 			catch(Exception e)
 			{
@@ -74,9 +79,19 @@ public class ThreadPool {
 			}
 		}
 		
-		if (queue.size() != poolSize)
-			System.err.println ("Some data processing was lost! " + "Only " + 
-					queue.size() + " processors of " + poolSize + " exists now");
+		synchronized(queue) {
+			while (queue.size() != poolSize)
+			{
+//				System.err.printf ("Waiting for the last threads to finish " +
+//						"%d of %d\n", queue.size(), ThreadPool.poolSize );
+				try {
+						queue.wait();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		
 		
 		return queue;	
 	}

@@ -120,7 +120,7 @@ public class SoftmaxCost extends MemoizedDifferentiableFunction
 		for(int i=0; i<Labels.length; i++)
 		{
 			if( Labels[i] < 0 || Labels[i] > CatSize )
-				System.err.println("Bad Data : " + Labels[i] + " | " + i);
+				; //System.err.println("Bad Data : " + Labels[i] + " | " + i);
 			else
 				LabelRep.put(Labels[i],i,1);
 		}

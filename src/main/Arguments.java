@@ -9,6 +9,7 @@ import java.io.*;
 import java.util.Map;
 
 import parallel.Parallel;
+import parallel.ThreadPool;
 
 import util.CommandLineUtils;
 import classify.LabeledDatum;
@@ -146,7 +147,11 @@ public class Arguments {
 		}
 
 		if (argMap.containsKey("-NumCores"))
-			Parallel.setPoolSize(Integer.parseInt(argMap.get("-NumCores")));
+		{	
+			int numCores = Integer.parseInt(argMap.get("-NumCores"));
+			Parallel.setPoolSize(numCores);
+			ThreadPool.setPoolSize(numCores);
+		}
 
 		if (argMap.containsKey("--help") || argMap.containsKey("-h")) {
 			exitOnReturn = true;
