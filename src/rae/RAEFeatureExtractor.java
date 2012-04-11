@@ -58,18 +58,16 @@ public class RAEFeatureExtractor {
 	{
 		int numExamples = Data.size();
 		features = DoubleMatrix.zeros(2*HiddenSize,numExamples);		
-		ThreadPool.map (Data, Propagator, 
-			new ThreadPool.Operation<RAEPropagation, LabeledDatum<Integer,Integer>>() {
-				public void perform(RAEPropagation locPropagator, int index, 
-						LabeledDatum<Integer,Integer> data)		
+		Parallel.For (Data, new Parallel.Operation<LabeledDatum<Integer,Integer>>() {
+			public void perform(int index, LabeledDatum<Integer,Integer> data)		
+			{
+				double[] feature = extractFeatures(Propagator, data);
+				lock.lock();
 				{
-					double[] feature = extractFeatures(locPropagator, data);
-					lock.lock();
-					{
-						features.putColumn(index, new DoubleMatrix(feature));				
-					}
-					lock.unlock();
+					features.putColumn(index, new DoubleMatrix(feature));				
 				}
+				lock.unlock();
+			}
 		});		
 		return features;
 	}
@@ -89,12 +87,10 @@ public class RAEFeatureExtractor {
 		int numExamples = Data.size();
 		final LabeledRAETree[] ExtractedTrees = new LabeledRAETree[numExamples];
 
-		ThreadPool.map (Data, Propagator, 
-			new ThreadPool.Operation<RAEPropagation, LabeledDatum<Integer,Integer>>() {
-				public void perform(RAEPropagation locPropagator, int index, 
-						LabeledDatum<Integer,Integer> data)		
+		Parallel.For (Data, new Parallel.Operation<LabeledDatum<Integer,Integer>>() {
+				public void perform(int index, LabeledDatum<Integer,Integer> data)		
 				{
-					LabeledRAETree tree = getRAETree(locPropagator, data);
+					LabeledRAETree tree = getRAETree(Propagator, data);
 					lock.lock();
 					{
 						ExtractedTrees[index] = tree;				
