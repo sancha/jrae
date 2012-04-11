@@ -79,9 +79,11 @@ public class RAECostComputer
 				lock.unlock();
 			}
 		});
-		
+
 		CalculateFineCosts(Theta);
 		
+		Propagator = null;
+		System.gc();
 		return cost;	
 	}
 	
@@ -126,6 +128,9 @@ public class RAECostComputer
 		
 		num_nodes -= NumExamples;
 		CalculateCosts(Theta);
+		
+		Propagator = null;
+		System.gc();
 		return cost;
 	}
 	
