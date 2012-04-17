@@ -91,6 +91,8 @@ public class RAEBuilder {
 			if (params.TreeDumpDir != null)
 				rae.DumpTrees(Trees, params.TreeDumpDir, params.Dataset, params.Dataset.Data);
 
+			System.out.println("Dumping complete");
+			
 		} else {
 			System.out.println
 					("Using the trained RAE. Model file retrieved from " + params.ModelFile
@@ -111,7 +113,12 @@ public class RAEBuilder {
 				System.err.println("It will be ignored when you are not in the training mode.");
 			}
 
-			List<LabeledRAETree> testTrees = fe.getRAETrees (params.Dataset.TestData);
+			List<LabeledRAETree> testTrees = null;
+			if (params.Dataset.TestData.size() > 0)
+				testTrees = fe.getRAETrees(params.Dataset.TestData);
+			else
+				testTrees = fe.getRAETrees(params.Dataset.Data);
+
 			List<LabeledDatum<Double, Integer>> classifierTestingData = fe.extractFeaturesIntoArray(testTrees);
 
 			Accuracy TestAccuracy = classifier.test(classifierTestingData);
@@ -130,6 +137,8 @@ public class RAEBuilder {
 			if (params.TreeDumpDir != null)
 				rae.DumpTrees(testTrees, params.TreeDumpDir, params.Dataset, params.Dataset.TestData);			
 		}
+		
+		System.exit(0);
 	}
 
 	private void DumpTrees( List<LabeledRAETree> trees, String treeDumpDir,

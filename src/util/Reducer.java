@@ -18,6 +18,9 @@ public class Reducer<T extends Reducible<T>> {
 		while (itr.hasNext())
 			proto.reduce(itr.next());
 		
+		list.clear();
+		System.gc();
+		
 		return proto;
 	}
 }

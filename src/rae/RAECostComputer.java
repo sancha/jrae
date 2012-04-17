@@ -79,6 +79,11 @@ public class RAECostComputer
 							num_nodes += tree.TreeSize;
 						}
 						lock.unlock();
+						
+						tree = null;
+						WordIndices = null;
+						WordsEmbedded = null;
+						
 					}
 			});
 		
