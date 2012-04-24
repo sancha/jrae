@@ -85,6 +85,11 @@ public class RAECost extends MemoizedDifferentiableFunction {
 		for(int i=0; i<gradRAE.length; i++)
 			gradient[i] += gradRAE[i];
 		
+		System.gc();	System.gc();
+		System.gc();	System.gc();
+		System.gc();	System.gc();
+		System.gc();	System.gc();
+		
 		return value;
 	}
 }

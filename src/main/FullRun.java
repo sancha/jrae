@@ -8,7 +8,6 @@ import math.*;
 import org.jblas.*;
 
 import rae.FineTunableTheta;
-import rae.LabeledRAETree;
 import rae.RAECost;
 import rae.RAEFeatureExtractor;
 
@@ -25,7 +24,7 @@ public class FullRun {
 		Arguments params = new Arguments();
 		params.parseArguments(args);
 
-		if( params.exitOnReturn )
+		if(params.exitOnReturn)
 			return;
 		
 		RAECost RAECost = null;
@@ -80,13 +79,11 @@ public class FullRun {
 			FeatureExtractor = new RAEFeatureExtractor(params.EmbeddingSize, tunedTheta, 
 								params.AlphaCat, params.Beta, params.CatSize, params.DictionarySize, f);
 			
-			List<LabeledRAETree> trainTrees = FeatureExtractor.getRAETrees (trainingData);
 			List<LabeledDatum<Double, Integer>> classifierTrainingData 
-								= FeatureExtractor.extractFeaturesIntoArray(trainTrees);
-
-			List<LabeledRAETree> testTrees = FeatureExtractor.getRAETrees (testData);
+				= FeatureExtractor.extractFeaturesIntoArray(trainingData);
+			
 			List<LabeledDatum<Double, Integer>> classifierTestingData 
-								= FeatureExtractor.extractFeaturesIntoArray(testTrees);
+				= FeatureExtractor.extractFeaturesIntoArray(testData);
 			
 			SoftmaxClassifier<Double,Integer> classifier = new SoftmaxClassifier<Double,Integer>( );
 
