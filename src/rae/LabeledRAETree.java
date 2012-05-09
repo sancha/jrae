@@ -88,20 +88,32 @@ public class LabeledRAETree implements LabeledDatum<Double, Integer>{
 			return feature;
 		
 		int HiddenSize = T[0].Features.rows;
-		feature = new double[ HiddenSize * 2 ];
+		feature = new double[ HiddenSize * 4 ];
 		DoubleMatrix tf = new DoubleMatrix(HiddenSize,TreeSize);
+		DoubleMatrix leafFeatures = new DoubleMatrix(HiddenSize,1);
+		DoubleMatrix interFeatures = new DoubleMatrix(HiddenSize,1);
 		if(SentenceLength > 1)
 		{
 			for(int i=0; i<TreeSize; i++)
+			{
 				tf.putColumn(i, T[i].Features);
+				if(T[i].isLeaf()) 
+				    leafFeatures.add(T[i].Features);
+				else 
+				    interFeatures.add(T[i].Features);
+			}
 			tf.muli(1.0/TreeSize);
+			leafFeatures.muli(1.0/SentenceLength);
+			interFeatures.muli(1.0/(SentenceLength-1));
 			
-			System.arraycopy(T[ 2 * SentenceLength - 2 ].Features.data, 0, feature, 0, HiddenSize);
-			System.arraycopy(tf.rowSums().data, 0, feature, HiddenSize, HiddenSize);
+			System.arraycopy(T[ 2 * SentenceLength - 2 ].Features.data, 0, feature, 0, HiddenSize); //root node response
+			System.arraycopy(tf.rowSums().data, 0, feature,  1*HiddenSize, HiddenSize); //average node responses
+			System.arraycopy(interFeatures.data, 0, feature, 2*HiddenSize, HiddenSize); //average leaf node responses
+			System.arraycopy(leafFeatures.data, 0, feature,  3*HiddenSize, HiddenSize); //average non-leaf node responses
 		}
 		else
 		{
-			System.arraycopy(T[ 2 * SentenceLength - 2].Features.data, 0, feature, 0, HiddenSize);
+			System.arraycopy(T[ 2 * SentenceLength - 2].Features.data, 0, feature, 0, HiddenSize); 
 			System.arraycopy(T[ 2 * SentenceLength - 2].Features.data, 0, feature, HiddenSize, HiddenSize);
 		}
 		return feature;	

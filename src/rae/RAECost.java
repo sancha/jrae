@@ -9,7 +9,6 @@ import classify.LabeledDatum;
 
 public class RAECost extends MemoizedDifferentiableFunction {
 
-	RAECostComputer Computer;
 	double[] Lambda, FTLambda;
 	double value, AlphaCat, Beta;
 	DoubleMatrix WeOrig;
@@ -21,7 +20,6 @@ public class RAECost extends MemoizedDifferentiableFunction {
 			int hiddenSize, int visibleSize, double[] Lambda, DoubleMatrix WeOrig, 
 			List<LabeledDatum<Integer,Integer>> DataCell, FloatMatrix FreqOrig, DifferentiableMatrixFunction f) {
 		
-		Computer = new RAECostComputer(CatSize, AlphaCat, Beta, DictionaryLength, hiddenSize, DataCell, FreqOrig, f);
 		evalCount = 0;
 		this.f = f;
 		this.Beta = Beta;

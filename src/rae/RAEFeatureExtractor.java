@@ -115,9 +115,9 @@ public class RAEFeatureExtractor {
 						DataFeatures[index] = r;
 					}
 					lock.unlock();
-					System.gc();
 				}
 			});
+			System.gc();
 			
 			treeStructuresStream.close();
 			treeStructuresFileWriter.close();
