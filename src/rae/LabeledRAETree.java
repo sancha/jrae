@@ -1,5 +1,7 @@
 package rae;
 
+import math.DoubleArrays;
+
 import org.jblas.*;
 
 import classify.LabeledDatum;
@@ -88,28 +90,48 @@ public class LabeledRAETree implements LabeledDatum<Double, Integer>{
 			return feature;
 		
 		int HiddenSize = T[0].Features.rows;
-		feature = new double[ HiddenSize * 4 ];
+		int scoreLength = T[0].scores.length;
+		
+		feature = new double[ HiddenSize * 4 + scoreLength * 3 ];
 		DoubleMatrix tf = new DoubleMatrix(HiddenSize,TreeSize);
 		DoubleMatrix leafFeatures = new DoubleMatrix(HiddenSize,1);
 		DoubleMatrix interFeatures = new DoubleMatrix(HiddenSize,1);
+		
+		
+		double[] leafScores = new double[scoreLength];
+		double[] interScores = new double[scoreLength]; 
+		double[] meanScores = new double[scoreLength];
+		
 		if(SentenceLength > 1)
 		{
 			for(int i=0; i<TreeSize; i++)
 			{
 				tf.putColumn(i, T[i].Features);
-				if(T[i].isLeaf()) 
-				    leafFeatures.add(T[i].Features);
-				else 
-				    interFeatures.add(T[i].Features);
+				meanScores = DoubleArrays.addi(meanScores, T[i].scores);
+        if (T[i].isLeaf()) {
+          leafFeatures.add(T[i].Features);
+          leafScores = DoubleArrays.addi(leafScores, T[i].scores);
+        } else {
+          interFeatures.add(T[i].Features);
+          interScores = DoubleArrays.addi(interScores, T[i].scores);
+        }
 			}
 			tf.muli(1.0/TreeSize);
 			leafFeatures.muli(1.0/SentenceLength);
 			interFeatures.muli(1.0/(SentenceLength-1));
 			
+			meanScores = DoubleArrays.multiply(meanScores,1.0/TreeSize);
+			leafScores = DoubleArrays.multiply(leafScores,1.0/SentenceLength);
+			interScores = DoubleArrays.multiply(interScores,1.0/(SentenceLength-1));
+      
 			System.arraycopy(T[ 2 * SentenceLength - 2 ].Features.data, 0, feature, 0, HiddenSize); //root node response
 			System.arraycopy(tf.rowSums().data, 0, feature,  1*HiddenSize, HiddenSize); //average node responses
 			System.arraycopy(interFeatures.data, 0, feature, 2*HiddenSize, HiddenSize); //average leaf node responses
 			System.arraycopy(leafFeatures.data, 0, feature,  3*HiddenSize, HiddenSize); //average non-leaf node responses
+			
+			System.arraycopy(meanScores, 0, feature,  4*HiddenSize, scoreLength); //average classifier responses
+			System.arraycopy(interScores, 0, feature,  4*HiddenSize + 1*scoreLength, scoreLength); //average non-leaf classifier responses
+			System.arraycopy(leafScores, 0, feature,  4*HiddenSize + 2*scoreLength, scoreLength); //average leaf classifier responses
 		}
 		else
 		{
