@@ -124,15 +124,19 @@ Refer run.sh for sample usage.
 	All lambda are weights on the regularization terms. LAMBDAL is the weight
 	on the embedding We (Refer the paper for more details)
 			
--lambdaCat
+-lambdaCat LAMBDACAT
 	All lambda are weights on the regularization terms. LAMBDACAT is the 
 	weight on the classifier weights.
 
--lambdaRAE
+-lambdaRAE LAMBDARAE
 	All lambda are weights on the regularization terms. LAMBDARAE is the 
 	weight on the classifier weights. This differs from LAMBDACAT in that 
 	this is applied in the second phase where the RAE is being fine-tuned 
 	(Refer the paper for more details)
+
+-CurriculumLearning 
+	FLAG is set to False by default. Set to True to turn on Curriculum
+	learning. Refer to Bengio,Y ICML 09 for more details.
 
 --help
 	Print this message and quit.

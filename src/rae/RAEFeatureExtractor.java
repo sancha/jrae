@@ -10,6 +10,7 @@ import java.io.PrintStream;
 import java.util.*;
 import java.util.concurrent.locks.*;
 import math.DifferentiableMatrixFunction;
+
 import org.jblas.*;
 import util.ArraysHelper;
 import classify.*;
@@ -137,7 +138,7 @@ public class RAEFeatureExtractor {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		new TreeDumpThread(tree, treeDumpDir, dataset, (ReviewDatum) data, index);
+		new TreeDumpThread(tree, treeDumpDir, dataset, data, index);
 	}
 
 	public List<LabeledDatum<Double, Integer>> extractFeaturesIntoArray(final List<LabeledDatum<Integer, Integer>> data) {

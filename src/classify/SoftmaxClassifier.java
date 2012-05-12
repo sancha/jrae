@@ -9,6 +9,7 @@ import math.*;
 import org.jblas.*;
 
 import util.Counter;
+import util.DoubleMatrixFunctions;
 
 /**
  * TODO Make it more generic later
@@ -80,6 +81,7 @@ public class SoftmaxClassifier<F,L>
 	public Accuracy test(List<LabeledDatum<F,L>> Data)
 	{
 		DoubleMatrix Features = makeFeatureMatrix(Data);
+		DoubleMatrixFunctions.prettyPrint(Features);
 		int[] Labels = makeLabelVector(Data);
 		CostFunction = new SoftmaxCost (CatSize, ClassifierTheta.FeatureLength, Lambda);
 		testScores = CostFunction.getPredictions(ClassifierTheta,Features);

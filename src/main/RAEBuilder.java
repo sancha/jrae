@@ -175,23 +175,65 @@ public class RAEBuilder {
     InitialTheta = new FineTunableTheta(params.EmbeddingSize,
         params.EmbeddingSize, params.CatSize, params.DictionarySize, true);
 
+    DoubleMatrix InitialWe = InitialTheta.We.dup();
+    
+    RAECost RAECost = null;
     FineTunableTheta tunedTheta = null;
-
-    RAECost RAECost = new RAECost(params.AlphaCat, params.CatSize, params.Beta,
+    Minimizer<DifferentiableFunction> minFunc = null;
+    
+    if(params.CurriculumLearning)
+      slowTrain(params, InitialTheta, InitialWe);
+      
+    RAECost = new RAECost(params.AlphaCat, params.CatSize, params.Beta,
         params.DictionarySize, params.hiddenSize, params.visibleSize,
-        params.Lambda, InitialTheta.We, params.Dataset.Data, null, f);
+        params.Lambda, InitialWe, params.Dataset.Data, null, f);
 
-    Minimizer<DifferentiableFunction> minFunc = new QNMinimizer(10,
-        params.MaxIterations);
+    minFunc = new QNMinimizer(10, params.MaxIterations);
 
     double[] minTheta = minFunc.minimize(RAECost, 1e-6, InitialTheta.Theta,
         params.MaxIterations);
 
     tunedTheta = new FineTunableTheta(minTheta, params.hiddenSize,
         params.visibleSize, params.CatSize, params.DictionarySize);
-
+  
+    
     // Important step
-    tunedTheta.setWe(tunedTheta.We.add(InitialTheta.We));
+    tunedTheta.setWe(tunedTheta.We.add(InitialWe));
+    return tunedTheta;
+  }
+  
+  private FineTunableTheta slowTrain
+    (Arguments params, FineTunableTheta tunedTheta, DoubleMatrix InitialWe){
+    
+    CurriculumLearning slowLearner = new CurriculumLearning(params.Dataset);
+    final int MILLION = 10000;
+    
+    int [] curriculum = new int[]{2,3,4,6,8,10};
+    
+    RAECost RAECost = null;
+    List<LabeledDatum<Integer,Integer>> Data = null;
+    Minimizer<DifferentiableFunction> minFunc = null;
+    
+    for (int ngram : curriculum)
+    {
+      Data = slowLearner.getNGrams(ngram, MILLION);
+      
+      System.out.println("SLOW LEARNING : " + ngram + " with " + Data.size() + " data points.");
+      
+      RAECost = new RAECost(params.AlphaCat, params.CatSize, params.Beta,
+          params.DictionarySize, params.hiddenSize, params.visibleSize,
+          params.Lambda, InitialWe, Data, null, f);
+  
+      minFunc = new QNMinimizer(10, params.MaxIterations);
+  
+      double[] minTheta = minFunc.minimize(RAECost, 1e-6, tunedTheta.Theta,
+          params.MaxIterations);
+  
+      tunedTheta = new FineTunableTheta(minTheta, params.hiddenSize,
+          params.visibleSize, params.CatSize, params.DictionarySize);
+    
+      tunedTheta.setWe(tunedTheta.We.add(InitialWe));
+    }
     return tunedTheta;
   }
 

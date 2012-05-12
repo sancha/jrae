@@ -109,10 +109,10 @@ public class LabeledRAETree implements LabeledDatum<Double, Integer>{
 				tf.putColumn(i, T[i].Features);
 				meanScores = DoubleArrays.addi(meanScores, T[i].scores);
         if (T[i].isLeaf()) {
-          leafFeatures.add(T[i].Features);
+          leafFeatures.addi(T[i].Features);
           leafScores = DoubleArrays.addi(leafScores, T[i].scores);
         } else {
-          interFeatures.add(T[i].Features);
+          interFeatures.addi(T[i].Features);
           interScores = DoubleArrays.addi(interScores, T[i].scores);
         }
 			}

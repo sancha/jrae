@@ -26,8 +26,7 @@ public class ReviewDatum implements LabeledDatum<Integer,Integer> {
 		this(ReviewTokens,label,itemNo);
 		assert ReviewTokens.length == indices.length;
 		this.Indices = new int[ indices.length ];
-		for(int i=0; i<indices.length; i++)
-			this.Indices[i] = indices[i];
+		System.arraycopy(indices, 0, this.Indices, 0, indices.length);
 	}
 	
 	
@@ -43,9 +42,14 @@ public class ReviewDatum implements LabeledDatum<Integer,Integer> {
 		this(ReviewTokens,label,itemNo);
 		assert ReviewTokens.length == indices.length;
 		this.Indices = new int[ indices.length ];
-		for(int i=0; i<indices.length; i++)
-			this.Indices[i] = indices[i];
+		System.arraycopy(indices, 0, this.Indices, 0, indices.length);		
 	}
+	
+  public ReviewDatum(int[] indices, int label, int itemNo) {
+    ReviewTokens = null;
+    this.Indices = new int[indices.length];
+    System.arraycopy(indices, 0, this.Indices, 0, indices.length);
+  }
 	
 	public void indexWords(Map<String,Integer> WordsIndexer)
 	{

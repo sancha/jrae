@@ -29,7 +29,7 @@ public class Arguments {
 	String ProbabilitiesOutputFile = null;
 	
 	
-	boolean TrainModel = false;
+	boolean TrainModel = false, CurriculumLearning = false;
 	int NumFolds = 10, MaxIterations = 80, EmbeddingSize = 50, CatSize = 1;
 	int DictionarySize, hiddenSize, visibleSize;
 	double AlphaCat = 0.2, Beta = 0.5;
@@ -42,6 +42,9 @@ public class Arguments {
 	public void parseArguments(String[] args) throws IOException {
 		Map<String, String> argMap = CommandLineUtils
 				.simpleCommandLineParser(args);
+		
+		if (argMap.containsKey("-CurriculumLearning"))
+		  CurriculumLearning = Boolean.parseBoolean(argMap.get("-CurriculumLearning"));
 
 		if (argMap.containsKey("-minCount"))
 			minCount = Integer.parseInt(argMap.get("-minCount"));
