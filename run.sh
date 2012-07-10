@@ -1,14 +1,20 @@
-java -jar jar/jrae.jar \
--DataDir data/tiny.mov \
+#!/bin/bash
+
+## Compile as 'javac -d bin/ -classpath .:libs/* -Xlint `find src | grep java$`'
+
+## Uses 1G of memory and specialized garbage collector for parallel programs. 
+
+java -Xms1g -Xmx1g -XX:+UseTLAB -XX:+UseConcMarkSweepGC -cp .:bin/:libs/* main.RAEBuilder \
+-DataDir data/mov \
 -MaxIterations 20 \
--ModelFile data/tiny.mov/tunedTheta.rae \
--ClassifierFile data/tiny.mov/Softmax.clf \
+-ModelFile data/mov/tunedTheta.rae \
+-ClassifierFile data/mov/Softmax.clf \
 -NumCores 3 \
 -TrainModel True \
--ProbabilitiesOutputFile data/tiny.mov/prob.out \
--TreeDumpDir data/tiny.mov/trees 
+-ProbabilitiesOutputFile data/mov/prob.out \
+-TreeDumpDir data/mov/trees
 
-#java -jar jar/jrae.jar \
+#java -Xms1g -Xmx1g -XX:+UseTLAB -XX:+UseConcMarkSweepGC -cp .:bin/:libs/* main.RAEBuilder \
 #-DataDir data/
 #-MaxIterations 80
 #-ModelFile data/mov/tunedTheta.rae
