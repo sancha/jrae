@@ -43,4 +43,4 @@ If you encounter any bugs, please report it on github.
 
 #WORD2VEC
 
-The core feature of the recursive autoencoder is to learn a representation of words and sentences. You are encouraged to try out the word2vec project http://code.google.com/p/word2vec/ 
+The core feature of the recursive autoencoder is to learn a representation of words and sentences. Google recently released a similar tool, you are encouraged to try out the word2vec project http://code.google.com/p/word2vec/ 
