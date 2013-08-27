@@ -40,3 +40,7 @@ If you encounter any bugs, please report it on github.
 * Created: 2012 February 20
 * Keywords: java, sentiment analysis, machine learning, nlp 
 * URL: <http://github.com/sancha/jrae>
+
+#WORD2VEC
+
+The core feature of the recursive autoencoder is to learn a representation of words and sentences. You are encouraged to try out the word2vec project http://code.google.com/p/word2vec/ 
