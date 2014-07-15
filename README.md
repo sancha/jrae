@@ -5,6 +5,8 @@ jrae is a re-implemention of semi-supervised recursive autoencoder in java. This
 More details are available at 
 http://www.socher.org/index.php/Main/Semi-SupervisedRecursiveAutoencodersForPredictingSentimentDistributions
 
+Also read http://colah.github.io/posts/2014-07-NLP-RNNs-Representations/ for a neat explanation on recursive deep representations.
+
 In short, semi-supervised recursive autoencoder is a feature learning algorithm to learn an encoding for text data and that can then be used for performing classification. The jrae package is pretty comprehensive - it includes code for learning the features as well as for performing basic classification, and is parallelized to run on a multi-core machine.
 
 The package includes a demo of movie review classification on which the algorithm attains state-of-art results. Please use rc3 for your experiments https://github.com/sancha/jrae/releases/tag/rc3, and use the master branch only for contributions. The master branch includes some unsupported code.
