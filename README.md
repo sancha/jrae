@@ -1,4 +1,4 @@
-#Java Recursive Autoencoder
+# Java Recursive Autoencoder
 
 jrae is a re-implemention of semi-supervised recursive autoencoder in java. This package also contains code to demonstrate its usage. 
 
@@ -11,12 +11,12 @@ In short, semi-supervised recursive autoencoder is a feature learning algorithm 
 
 The package includes a demo of movie review classification on which the algorithm attains state-of-art results. Please use rc3 for your experiments https://github.com/sancha/jrae/releases/tag/rc3, and use the master branch only for contributions. The master branch includes some unsupported code.
 
-#Updates
+# Updates
 * The core feature of the recursive autoencoder is to learn a representation of words and sentences. Google recently released a similar tool, you are encouraged to try out the word2vec project http://code.google.com/p/word2vec/ 
 
 * Stanford has an official code package integrated into Stanford CoreNLP, please check http://nlp.stanford.edu/sentiment/code.html for updates.
 
-#Dependencies
+# Dependencies
 
 The RAE package requires the jblas package for supporting the linear algebra 
 operations. These requirements are included in the lib directory.
@@ -31,7 +31,7 @@ LAPACK or ATLAS. Check out https://github.com/mikiobraun/jblas if you run
 into trouble. If you are running ubuntu, do `sudo apt-get install 
 libgfortran3`.
 
-#BUGS
+# BUGS
 
 If you encounter any bugs, please report it on github.
 
